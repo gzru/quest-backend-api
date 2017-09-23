@@ -2,26 +2,22 @@ import aerospike
 
 
 class AerospikeConnector:
-    def __init__(self):
+    def __init__(self, max_record_size, rw_timeout_ms, connection_timeout_ms):
         self._client = None
-        self._max_record_size = 128000
-        self._rw_timeout = 500
+        self._max_record_size = max_record_size
+        self._connection_timeout_ms = connection_timeout_ms
         self._read_policy = {
-            'timeout': self._rw_timeout
+            'timeout': rw_timeout_ms
         }
         self._write_policy = {
-            'timeout': self._rw_timeout
+            'timeout': rw_timeout_ms
         }
 
     def connect(self, hosts):
-        conf_hosts = list()
-        for host in hosts:
-            conf_hosts.append((host, 3000))
-
         config = {
-            'hosts': conf_hosts,
+            'hosts': hosts,
             'policies': {
-                'timeout': 1000
+                'timeout': self._connection_timeout_ms
             }
         }
 

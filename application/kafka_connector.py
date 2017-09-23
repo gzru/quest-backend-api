@@ -2,14 +2,15 @@ from kafka import KafkaProducer
 
 
 class KafkaConnector:
-    def __init__(self):
+    def __init__(self, request_timeout_ms, send_message_timeout_sec):
         self._producer = None
-        self._send_message_timeout_sec = 1
+        self._request_timeout_ms = request_timeout_ms
+        self._send_message_timeout_sec = send_message_timeout_sec
 
     def connect(self, hosts):
         try:
             self._producer = KafkaProducer(bootstrap_servers=hosts,
-                                            request_timeout_ms=60000)
+                                            request_timeout_ms=self._request_timeout_ms)
         except Exception as ex:
             # log error
             return False
