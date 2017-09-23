@@ -16,6 +16,8 @@ import json
 import logging
 
 
+logging.basicConfig(level=logging.INFO, format='#%(process)s\t[%(asctime)s] %(levelname)s: %(module)s: %(message)s')
+
 application = Flask(__name__)
 
 global_context = GlobalContext()
