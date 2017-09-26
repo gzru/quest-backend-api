@@ -1,10 +1,11 @@
-from query import Query, BadQuery
+from query import Query
 from twilio.jwt.access_token import AccessToken
 from twilio.jwt.access_token.grants import ChatGrant
+import settings
 import json
 
 
-class MakeMessagesTokenQuery(Query):
+class MakeMessagingTokenQuery(Query):
 
     def __init__(self):
         self.user_id = None
@@ -16,16 +17,16 @@ class MakeMessagesTokenQuery(Query):
         self.sign_id = self._get_required_str(tree, 'uuid')
 
 
-class MakeMessagesTokenSession:
+class MakeMessagingTokenSession:
 
     def __init__(self, global_context):
-        self._account_sid = 'AC5ad3dea7a74001036c0ed179284a5965'
-        self._api_key = 'SK9cf74c45159a16016d9c88c142b2eb50'
-        self._api_secret = 'Ysg3PJ3Mg1szHNvYX258DTiMUKqBt1Gz'
-        self._chat_service_sid = 'ISe5fee5b44dd44918b6c8fc615e90b3c9'
+        self._account_sid = settings.TWILIO_ACCOUNT_SID
+        self._api_key = settings.TWILIO_API_KEY
+        self._api_secret = settings.TWILIO_API_SECRET
+        self._chat_service_sid = settings.TWILIO_CHAT_SERVICE_SID
 
     def parse_query(self, data):
-        self._query = MakeMessagesTokenQuery()
+        self._query = MakeMessagingTokenQuery()
         self._query.parse(data)
 
     def execute(self):
