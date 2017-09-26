@@ -7,8 +7,9 @@ from create_profile_session import CreateProfileSession
 from update_profile_session import UpdateProfileSession
 from find_profile_session import FindProfileSession
 from get_profile_session import GetProfileSession
+from get_external_friends_session import GetExternalFriendsSession
 from preview_sign_session import PreviewSignSession
-from make_messages_token_session import MakeMessagesTokenSession
+from make_messaging_token_session import MakeMessagingTokenSession
 from get_matching_session import GetMatchingSession
 from facebook_auth_session import FacebookAuthSession
 from global_context import GlobalContext
@@ -72,9 +73,13 @@ def find_profile():
 def get_profile():
     return run_session(request.get_data(), GetProfileSession)
 
-@application.route('/api/message/token', methods=['POST'])
-def make_messages_token():
-    return run_session(request.get_data(), MakeMessagesTokenSession)
+@application.route('/api/profile/external_friends', methods=['POST'])
+def get_external_friends():
+    return run_session(request.get_data(), GetExternalFriendsSession)
+
+@application.route('/api/messaging/token', methods=['POST'])
+def make_messaging_token():
+    return run_session(request.get_data(), MakeMessagingTokenSession)
 
 @application.route('/api/matching/get_batch', methods=['POST'])
 def get_matching():
