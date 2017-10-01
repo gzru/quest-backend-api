@@ -9,6 +9,7 @@ class FacebookAuthQuery(Query):
 
     def __init__(self):
         self.access_token = None
+        self.facebook_user_id = None
 
     def parse(self, data):
         tree = self._parse_json(data)
