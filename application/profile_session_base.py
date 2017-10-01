@@ -1,4 +1,5 @@
 from query import Query, BadQuery
+from users_engine import UsersEngine
 import json
 import hashlib
 import base64
@@ -8,6 +9,7 @@ class UserInfo(object):
 
     def __init__(self):
         self.user_id = None
+        self.email = None
         self.facebook_user_id = None
         self.facebook_access_token = None
         self.name = None
@@ -36,6 +38,7 @@ class ProfileQueryBase(Query):
 class ProfileSessionBase(object):
 
     def __init__(self, global_context):
+        self._engine = UsersEngine(global_context)
         self._aerospike_connector = global_context.aerospike_connector
         self._namespace = 'test'
         self._info_set = 'user_info'
@@ -49,6 +52,7 @@ class ProfileSessionBase(object):
             if value:
                 hasher.update(str(value))
         _update(query.facebook_user_id)
+        _update(query.email)
         return int(hasher.hexdigest()[:16], 16) & 0x7FFFFFFFFFFFFFFF
 
     def _check_exists(self, user_id):
@@ -61,13 +65,13 @@ class ProfileSessionBase(object):
             'user_id': user_id,
             'facebook_user_id': query.facebook_user_id,
             'facebook_access_token': query.facebook_access_token,
-            'name': query.name
+            'name': query.name,
+            'email': query.email
         }
         bins = {
             'data': json.dumps(info)
         }
-        if not self._aerospike_connector.put_bins(info_key, bins):
-            raise Exception('Can\'t save info')
+        self._aerospike_connector.put_bins(info_key, bins)
 
     def _get_info(self, user_id):
         info_key = (self._namespace, self._info_set, str(user_id))
@@ -87,6 +91,7 @@ class ProfileSessionBase(object):
         result['facebook_user_id'] = parsed.get('facebook_user_id')
         result['facebook_access_token'] = parsed.get('facebook_access_token')
         result['name'] = parsed.get('name')
+        result['email'] = parsed.get('email')
         return result
 
     def _put_meta(self, user_id, query):
@@ -122,8 +127,7 @@ class ProfileSessionBase(object):
         bins = {
             'user_id': str(user_id)
         }
-        if not self._aerospike_connector.put_bins(link_key, bins):
-            raise Exception('Can\'t save link')
+        self._aerospike_connector.put_bins(link_key, bins)
 
     def _get_external_link(self, facebook_user_id):
         if not facebook_user_id:

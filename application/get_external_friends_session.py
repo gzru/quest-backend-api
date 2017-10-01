@@ -43,17 +43,36 @@ class GetExternalFriendsSession(ProfileSessionBase):
             resp = requests.get(page_uri)
             # parse
             parsed = json.loads(resp.text)
+            # check errors
+            error = parsed.get('error')
+            if error:
+                logging.error('Facebook error: {}'.format(error.get('message')))
+                raise Exception('Can\'t get data from Facebook')
             # take profiles
             data = parsed.get('data')
+
+            profiles = list()
+            external_ids = list()
             for entry in data:
-                facebook_user_id = entry.get('id')
+                profile = {
+                    'facebook_user_id': entry.get('id'),
+                    'name': entry.get('name')
+                }
+                profiles.append(profile)
+                external_ids.append(entry.get('id'))
 
-                profile = dict()
-                profile['facebook_user_id'] = facebook_user_id
-                profile['user_id'] = self._get_user_id_by_fb(facebook_user_id)
-                profile['name'] = entry.get('name')
+            local_ids = self._engine.external_to_local_id_many(external_ids)
+            for i in range(len(local_ids) - 1, -1, -1):
+                if local_ids[i] == None:
+                    del local_ids[i]
+                    del profiles[i]
+                profiles[i]['user_id'] = local_ids[i]
 
-                friends.append(profile)
+            check_result = self._engine.check_friends_many(self._query.user_id, local_ids)
+            for i in range(len(check_result)):
+                if not check_result[i]:
+                    friends.append(profiles[i])
+
             # paging
             cursor, has_next = self._parse_paging(parsed.get('paging'))
         except Exception as ex:
@@ -66,23 +85,6 @@ class GetExternalFriendsSession(ProfileSessionBase):
         }
 
         return json.dumps(result)
-
-    def _get_user_id_by_fb(self, facebook_user_id):
-        user_id = self._get_external_link(facebook_user_id)
-        if not user_id:
-            logging.warning('Can\'t find user by facebook user id')
-
-            info = UserInfo()
-            info.facebook_user_id = facebook_user_id
-
-            # Generate user id
-            info.user_id = self._gen_user_id(info)
-
-            # Create profile
-            self._put_info(info.user_id, info)
-            self._put_external_link(info.user_id, facebook_user_id)
-
-        return int(user_id)
 
     def _parse_paging(self, paging):
         cursor = ''
