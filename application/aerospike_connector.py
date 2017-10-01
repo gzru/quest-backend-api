@@ -1,4 +1,6 @@
+from error import APIInternalServicesError, APILogicalError
 import aerospike
+import logging
 
 
 class AerospikeConnector:
@@ -10,6 +12,10 @@ class AerospikeConnector:
             'timeout': rw_timeout_ms
         }
         self._write_policy = {
+            'timeout': rw_timeout_ms,
+            'key': aerospike.POLICY_KEY_SEND
+        }
+        self._scan_policy = {
             'timeout': rw_timeout_ms
         }
 
@@ -24,22 +30,38 @@ class AerospikeConnector:
         try:
             self._client = aerospike.client(config)
             self._client.connect()
-        except Exception as e:
-            # log error
+        except Exception as ex:
+            logging.error('Database error: {}'. format(ex))
             return False
         return True
 
     def check_exists(self, key):
-        (_, meta) = self._client.exists(key, policy=self._read_policy)
-        if not meta:
-            return False
-        return True
+        try:
+            (_, meta) = self._client.exists(key, policy=self._read_policy)
+            if not meta:
+                return False
+            return True
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
+
+    def remove(self, key):
+        try:
+            self._client.remove(key, policy=self._write_policy)
+        except aerospike.exception.RecordNotFound:
+            pass
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
 
     def put_bins(self, key, bins, ttl=0):
-        return self._put_one(key, bins, ttl)
+        self._put_one(key, bins, ttl)
 
     def get_bins(self, key):
         return self._get_one(key)
+
+    def get_bins_many(self, keys):
+        return self._get_many(keys)
 
     def put_data(self, key, data, ttl=0):
         chunks = self._split_by_chunks(key, data)
@@ -48,8 +70,7 @@ class AerospikeConnector:
                 'data': bytearray(chunk[1]),
                 'chunks_count': len(chunks)
             }
-            if not self._put_one(chunk[0], bins, ttl):
-                return False
+            self._put_one(chunk[0], bins, ttl)
         return True
 
     def get_data(self, key):
@@ -59,8 +80,8 @@ class AerospikeConnector:
 
         data = bins.get('data')
         if not data:
-            # log error
-            return None
+            logging.error('Missed data bin')
+            raise APILogicalError('Missed data bin')
 
         chunks_count = bins.get('chunks_count')
         if not chunks_count or chunks_count == 1:
@@ -72,20 +93,51 @@ class AerospikeConnector:
             chunk_keys.append(self._chunk_subkey(key, i))
 
         chunks = self._get_many(chunk_keys)
-        if not chunks:
-            # log error
-            return None
-
         for chunk in chunks:
             if not chunk:
-                # log error
-                return None
+                logging.error('One of data chunks missed')
+                raise APILogicalError('One of data chunks missed')
             data = chunk.get('data')
             if not data:
-                # log error
-                return None
+                logging.error('Missed data bin')
+                raise APILogicalError('Missed data bin')
             result.extend(data)
         return result
+
+    def scan(self, namespace, set, bins):
+        try:
+            scan = self._client.scan(namespace, set)
+            scan.select(*bins)
+            response = scan.results(policy=self._scan_policy)
+            return [entry[2] for entry in response]
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
+
+    def list_append(self, key, bin, val):
+        try: 
+            self._client.list_append(key, bin, val, policy=self._write_policy)
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
+
+    def list_get_range(self, key, bin, index, count):
+        try: 
+            return self._client.list_get_range(key, bin, index, count, policy=self._read_policy)
+        except aerospike.exception.RecordNotFound:
+            return None
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
+
+    def list_size(self, key, bin):
+        try: 
+            return self._client.list_size(key, bin, policy=self._read_policy)
+        except aerospike.exception.RecordNotFound:
+            return 0
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
 
     def _split_by_chunks(self, key, data):
         chunk_size = self._max_record_size
@@ -108,8 +160,11 @@ class AerospikeConnector:
     def _get_one(self, key):
         try:
             (_, _, bins) = self._client.get(key, policy=self._read_policy)
-        except Exception as ex:
+        except aerospike.exception.RecordNotFound:
             return None
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
         return bins
 
     def _get_many(self, keys):
@@ -119,15 +174,14 @@ class AerospikeConnector:
             for entry in response:
                 result.append(entry[2])
         except Exception as ex:
-            # log error
-            return None
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
         return result
 
     def _put_one(self, key, bins, ttl):
         try: 
             self._client.put(key, bins, meta={'ttl': ttl}, policy=self._write_policy)
         except Exception as ex:
-            # log error
-            return False
-        return True
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
 
