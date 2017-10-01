@@ -20,7 +20,7 @@ class Query:
 
     def _get_required(self, tree, name):
         value = self._get_optional(tree, name)
-        if not value:
+        if value == None:
             raise BadQuery('Missed required query parameter "{}"'.format(name))
         return value
 
