@@ -35,7 +35,7 @@ class GetProfileSession(ProfileSessionBase):
         self._query = GetProfileQuery()
         self._query.parse(data)
 
-        logging.error('user_id = {}'.format(self._query.user_id))
+        logging.info('user_id = {}'.format(self._query.user_id))
 
     def execute(self):
         result = self._get_info(self._query.user_id)

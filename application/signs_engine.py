@@ -3,6 +3,7 @@ import hashlib
 import requests
 import logging
 import json
+import base64
 
 
 class SignInfo(object):
@@ -15,6 +16,38 @@ class SignInfo(object):
         self.radius = None
         self.time_to_live = None
         self.timestamp = None
+        self.is_private = True
+
+    def encode(self):
+        # blob
+        data = {
+            'sign_id': self.sign_id,
+            'user_id': self.user_id,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'radius': self.radius,
+            'time_to_live': self.time_to_live,
+            'timestamp': self.timestamp
+        }
+        # a record itself
+        record = {
+            'data': json.dumps(data),
+            'is_private': int(self.is_private)
+        }
+        return record
+
+    def decode(self, record):
+        # blob
+        data = json.loads(record['data'])
+        self.sign_id = data['sign_id']
+        self.user_id = data['user_id']
+        self.latitude = data['latitude']
+        self.longitude = data['longitude']
+        self.radius = data['radius']
+        self.time_to_live = data['time_to_live']
+        self.timestamp = int(data['timestamp'])
+        # rest
+        self.is_private = bool(record.get('is_private', True))
 
 
 class SignsEngine(object):
@@ -64,6 +97,27 @@ class SignsEngine(object):
         self._aerospike_connector.remove((self._namespace, self._meta_set, str(sign_id)))
         self._aerospike_connector.remove((self._namespace, self._features_set, str(sign_id)))
 
+    def check_privacy_many(self, sign_ids):
+        keys = list()
+        for sign_id in sign_ids:
+            keys.append((self._namespace, self._info_set, str(sign_id)))
+        info = self._aerospike_connector.get_bins_many(keys)
+
+        result = list()
+        for i in range(len(info)):
+            entry = info[i]
+            if entry == None:
+                result.append(None)
+            else:
+                result.append(bool(entry.get('is_private', True)))
+        return result
+
+    def set_sign_privacy(self, sign_id, is_private):
+        update = {
+            'is_private': int(is_private)
+        }
+        self._aerospike_connector.put_bins((self._namespace, self._info_set, str(sign_id)), update)
+
     def _gen_sign_id(self, info, object_blob):
         hasher = hashlib.md5()
         def _update(value):
@@ -82,16 +136,7 @@ class SignsEngine(object):
 
     def _put_info(self, sign_id, info):
         info_key = (self._namespace, self._info_set, str(sign_id))
-        data = {
-            'sign_id': sign_id,
-            'user_id': info.user_id,
-            'latitude': info.latitude,
-            'longitude': info.longitude,
-            'radius': info.radius,
-            'time_to_live': info.time_to_live,
-            'timestamp': info.timestamp
-        }
-        self._aerospike_connector.put_bins(info_key, {'data': json.dumps(data)})
+        self._aerospike_connector.put_bins(info_key, info.encode())
 
     def get_info(self, sign_id):
         info_key = (self._namespace, self._info_set, str(sign_id))
@@ -100,20 +145,9 @@ class SignsEngine(object):
         if record == None:
             raise APILogicalError('Sign {} not found'.format(sign_id))
 
-        data = record.get('data')
-        if data == None:
-            raise APILogicalError('Info record has no data field')
-
         try:
-            pdata = json.loads(data)
             info = SignInfo()
-            info.sign_id = pdata['sign_id']
-            info.user_id = pdata['user_id']
-            info.latitude = pdata['latitude']
-            info.longitude = pdata['longitude']
-            info.radius = pdata['radius']
-            info.time_to_live = pdata['time_to_live']
-            info.timestamp = pdata['timestamp']
+            info.decode(record)
         except Exception as ex:
             logging.error('Bad info record, {}'.format(ex))
             raise APILogicalError('Bad info record, {}'.format(ex))
@@ -199,8 +233,9 @@ if __name__ == "__main__":
     image_blob = 'abc'
     preview_blob = 'abcd'
 
-    info.sign_id = se._gen_sign_id(info, object_blob)
+    #info.sign_id = se._gen_sign_id(info, object_blob)
 
     #print se.put_sign(info, features, meta_blob, object_blob, image_blob, preview_blob)
-    se.remove_sign(info.sign_id)
+    #se.set_sign_privacy(5136828351633214532, True)
+    #print se.check_privacy_many([5136828351633214532])
 

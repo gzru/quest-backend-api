@@ -11,6 +11,7 @@ class UpdateProfileQuery(ProfileQueryBase):
         self.name = None
         self.friends = None
         self.meta_blob = None
+        self.email = None
 
     def parse(self, data):
         tree = self._parse_json(data)
@@ -19,6 +20,7 @@ class UpdateProfileQuery(ProfileQueryBase):
         self.facebook_access_token = self._get_optional_str(tree, 'facebook_access_token')
         self.name = self._get_optional_str(tree, 'name')
         self.meta_blob = self._get_optional_blob(tree, 'meta_blob')
+        self.email = self._get_optional_str(tree, 'email')
 
 
 class UpdateProfileSession(ProfileSessionBase):

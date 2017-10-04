@@ -1,5 +1,5 @@
 from query import Query, BadQuery
-from sign_engine import SignsEngine, SignInfo
+from signs_engine import SignsEngine, SignInfo
 import json
 import base64
 

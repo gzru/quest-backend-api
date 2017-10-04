@@ -4,6 +4,8 @@ from flask import Flask, jsonify, request
 
 from put_sign_session import PutSignSession
 from get_sign_session import GetSignSession
+from update_sign_session import UpdateSignSession
+from remove_sign_session import RemoveSignSession
 from preview_sign_session import PreviewSignSession
 from make_messaging_token_session import MakeMessagingTokenSession
 from get_matching_session import GetMatchingSession
@@ -16,6 +18,7 @@ from get_profile_session import GetProfileSession
 from add_friends_session import AddFriendsSession
 from get_friends_session import GetFriendsSession
 from get_external_friends_session import GetExternalFriendsSession
+from get_user_signs_session import GetUserSignsSession
 
 from facebook_auth_session import FacebookAuthSession
 from email_auth_stage1_session import EMailAuthStage1Session
@@ -62,6 +65,14 @@ def put_sign():
 def get_sign():
     return run_session(request.get_data(), GetSignSession)
 
+@application.route('/api/sign/update', methods=['POST'])
+def update_sign():
+    return run_session(request.get_data(), UpdateSignSession)
+
+@application.route('/api/sign/remove', methods=['POST'])
+def get_remove():
+    return run_session(request.get_data(), RemoveSignSession)
+
 @application.route('/api/sign/preview', methods=['POST'])
 def preview_sign():
     return run_session(request.get_data(), PreviewSignSession)
@@ -97,6 +108,10 @@ def get_friends():
 @application.route('/api/profile/friends/add', methods=['POST'])
 def add_friends():
     return run_session(request.get_data(), AddFriendsSession)
+
+@application.route('/api/profile/signs/get', methods=['POST'])
+def get_signs():
+    return run_session(request.get_data(), GetSignsSession)
 
 @application.route('/api/messaging/token', methods=['POST'])
 def make_messaging_token():
