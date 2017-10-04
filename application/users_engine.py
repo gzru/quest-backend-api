@@ -1,4 +1,5 @@
 from global_context import GlobalContext
+from error import APILogicalError
 import base64
 import json
 
@@ -45,9 +46,11 @@ class UsersEngine(object):
         self._namespace = 'test'
         self._info_set = 'user_info'
         self._friends_set = 'user_friends'
+        self._friends_bin = 'data'
+        self._signs_set = 'user_signs'
+        self._signs_bin = 'data'
         self._external_to_local_set = 'user_external_to_local'
         self._relations_set = 'relations_user_user'
-        self._friends_bin = 'data'
 
     def put_friend(self, user_id, friend_user_id):
         relation_key = '{}:{}'.format(user_id, friend_user_id)
@@ -78,7 +81,7 @@ class UsersEngine(object):
 
         result.data = self._aerospike_connector.list_get_range(user_key, self._friends_bin, cursor.offset, query_count)
         if result.data == None:
-            raise Exception('Can\'t get friends range from database')
+            raise APILogicalError('Can\'t get friends range from database')
 
         next_cursor = Cursor(0, cursor.offset + query_count)
         result.cursor_code = next_cursor.encode()
@@ -136,14 +139,51 @@ class UsersEngine(object):
             result.append(profile)
         return result
 
+    def put_sign(self, user_id, sign_id):
+        self._aerospike_connector.list_append((self._namespace, self._signs_set, str(user_id)), self._signs_bin, int(sign_id))
+
+    def get_signs(self, user_id, limit, cursor_code):
+        user_key = (self._namespace, self._signs_set, str(user_id))
+
+        result = DataPage()
+
+        cursor = Cursor()
+        cursor.decode(cursor_code)
+
+        signs_count = self._aerospike_connector.list_size(user_key, self._signs_bin)
+        query_count = limit
+        if cursor.offset + query_count >= signs_count:
+            query_count = signs_count - cursor.offset
+            result.has_next = False
+        else:
+            result.has_next = True
+
+        if query_count <= 0:
+            return result
+
+        result.data = self._aerospike_connector.list_get_range(user_key, self._signs_bin, cursor.offset, query_count)
+        if result.data == None:
+            raise APILogicalError('Can\'t get signs range from database')
+
+        next_cursor = Cursor(0, cursor.offset + query_count)
+        result.cursor_code = next_cursor.encode()
+
+        return result
+
 
 if __name__ == "__main__":
     global_context = GlobalContext()
     global_context.initialize()
 
     ue = UsersEngine(global_context)
-    print ue.search("ivan")
+    #print ue.search("ivan")
 
     #ue.put_friend(123, 346)
     #ue.get_friends(123, 3, '')
+
+    #ue.put_sign(123, 5136828351633214532)
+    #page = ue.get_signs(123, 1, '')
+    #print page.data
+    #print page.cursor_code
+    #print page.has_next
 

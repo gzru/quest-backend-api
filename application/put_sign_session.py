@@ -1,8 +1,10 @@
 from query import Query, BadQuery
-from sign_engine import SignsEngine, SignInfo
+from signs_engine import SignsEngine, SignInfo
+from users_engine import UsersEngine
 import hashlib
 import json
 import time
+import logging
 
 
 class PutSignQuery(Query):
@@ -14,6 +16,7 @@ class PutSignQuery(Query):
         self.radius = None
         self.time_to_live = None
         self.timestamp = None
+        self.is_private = None
         self.features = None
         self.meta_blob = None
         self.object_blob = None
@@ -22,7 +25,7 @@ class PutSignQuery(Query):
 
     def parse(self, data):
         tree = self._parse_json(data)
-        self.user_id = self._get_required_int64(tree, 'user_id')
+        self.user_id = int(self._get_required_str(tree, 'user_token'))
         self.latitude = self._get_required_float64(tree, 'latitude')
         self.longitude = self._get_required_float64(tree, 'longitude')
         self.radius = self._get_required_float64(tree, 'radius')
@@ -39,7 +42,11 @@ class PutSignQuery(Query):
 
         self.timestamp = self._get_optional_int64(tree, 'timestamp')
         if self.timestamp == None:
-            self.timestamp = time.time()
+            self.timestamp = int(time.time())
+
+        self.is_private = self._get_optional_bool(tree, 'is_private')
+        if self.is_private == None:
+            self.is_private = True
 
     def _parse_features(self, tree):
         features = self._get_required(tree, 'features')
@@ -53,10 +60,11 @@ class PutSignQuery(Query):
         return features
 
 
-class PutSignSession:
+class PutSignSession(object):
 
     def __init__(self, global_context):
         self._sign_engine = SignsEngine(global_context)
+        self._users_engine = UsersEngine(global_context)
 
     def parse_query(self, data):
         self._query = PutSignQuery()
@@ -70,6 +78,7 @@ class PutSignSession:
         info.radius = self._query.radius
         info.time_to_live = self._query.time_to_live
         info.timestamp = self._query.timestamp
+        info.is_private = self._query.is_private
 
         sign_id = self._sign_engine.put_sign(info, \
                                     self._query.features, \
@@ -78,5 +87,17 @@ class PutSignSession:
                                     self._query.image_blob, \
                                     self._query.preview_blob)
 
+        self._users_engine.put_sign(info.user_id, sign_id)
+
         return json.dumps({'success': True, 'sign_id': sign_id})
+
+
+if __name__ == "__main__":
+    from global_context import GlobalContext
+    global_context = GlobalContext()
+    global_context.initialize()
+
+    s = PutSignSession(global_context)
+    s.parse_query('{"user_token": "123", "latitude": 1, "longitude": 4, "radius": 1, "features":[1,2,3], "is_private": false}')
+    print s.execute()
 
