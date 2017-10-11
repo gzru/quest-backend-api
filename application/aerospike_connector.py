@@ -38,12 +38,26 @@ class AerospikeConnector:
     def check_exists(self, key):
         try:
             (_, meta) = self._client.exists(key, policy=self._read_policy)
-            if not meta:
+            if meta == None:
                 return False
             return True
         except Exception as ex:
             logging.error('Database error: {}'.format(ex))
             raise APIInternalServicesError('Database error: {}'.format(ex))
+
+    def check_exists_many(self, keys):
+        result = list()
+        try:
+            response = self._client.exists_many(keys, policy=self._read_policy)
+            for entry in response:
+                if entry[1] == None:
+                    result.append(False)
+                else:
+                    result.append(True)
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
+        return result
 
     def remove(self, key):
         try:
@@ -75,7 +89,7 @@ class AerospikeConnector:
 
     def get_data(self, key):
         bins = self._get_one(key)
-        if not bins:
+        if bins == None:
             return None
 
         data = bins.get('data')
