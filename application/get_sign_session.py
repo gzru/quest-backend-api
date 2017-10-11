@@ -62,5 +62,8 @@ class GetSignSession:
         if 'image_blob' in self._query.properties:
             result['image_blob'] = self._sign_engine.get_image(self._query.sign_id)
 
+        if 'preview_blob' in self._query.properties:
+            result['preview_blob'] = self._sign_engine.get_preview(self._query.sign_id)
+
         return json.dumps(result)
 
