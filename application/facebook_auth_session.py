@@ -61,7 +61,7 @@ class FacebookAuthSession(ProfileSessionBase):
             self._put_info(user_id, info)
             self._put_external_link(user_id, facebook_user_id)
 
-        return json.dumps({ 'user_token': str(user_id), 'user_id': int(user_id) })
+        return json.dumps({ 'success': True, 'user_token': str(user_id), 'user_id': int(user_id) })
 
 """
 from requests_oauthlib import OAuth2Session
