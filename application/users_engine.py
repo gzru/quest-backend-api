@@ -2,6 +2,7 @@ from global_context import GlobalContext
 from error import APILogicalError
 import base64
 import json
+import hashlib
 
 
 class DataPage(object):
@@ -38,6 +39,40 @@ class Cursor(object):
             raise Exception('Bad cursor')
 
 
+class UserInfo(object):
+
+    def __init__(self):
+        self.user_id = None
+        self.facebook_user_id = None
+        self.facebook_access_token = None
+        self.name = None
+        self.email = None
+
+    def encode(self):
+        # blob
+        data = {
+            'user_id': self.user_id,
+            'facebook_user_id': self.facebook_user_id,
+            'facebook_access_token': self.facebook_access_token,
+            'name': self.name,
+            'email': self.email
+        }
+        # a record itself
+        record = {
+            'data': json.dumps(data),
+        }
+        return record
+
+    def decode(self, record):
+        # blob
+        data = json.loads(record['data'])
+        self.user_id = data['user_id']
+        self.facebook_user_id = data.get('facebook_user_id')
+        self.facebook_access_token = data.get('facebook_access_token')
+        self.name = data.get('name')
+        self.email = data.get('email')
+
+
 # TODO: Buckets
 class UsersEngine(object):
 
@@ -51,6 +86,39 @@ class UsersEngine(object):
         self._signs_bin = 'data'
         self._external_to_local_set = 'user_external_to_local'
         self._relations_set = 'relations_user_user'
+
+    def gen_user_id(self, info):
+        hasher = hashlib.md5()
+        def _update(value):
+            if value:
+                hasher.update(str(value))
+        _update(info.facebook_user_id)
+        _update(info.email)
+        return int(hasher.hexdigest()[:16], 16) & 0x7FFFFFFFFFFFFFFF
+
+    def put_info(self, info):
+        info_key = (self._namespace, self._info_set, str(info.user_id))
+        self._aerospike_connector.put_bins(info_key, info.encode())
+
+    def get_info(self, user_id):
+        info_key = (self._namespace, self._info_set, str(user_id))
+
+        record = self._aerospike_connector.get_bins(info_key)
+        if record == None:
+            raise APILogicalError('User {} not found'.format(user_id))
+
+        try:
+            info = UserInfo()
+            info.decode(record)
+        except Exception as ex:
+            logging.error('Bad info record, {}'.format(ex))
+            raise APILogicalError('Bad info record, {}'.format(ex))
+        return info
+
+    def remove_user(self, user_id):
+        self._aerospike_connector.remove((self._namespace, self._info_set, str(user_id)))
+        self._aerospike_connector.remove((self._namespace, self._friends_set, str(user_id)))
+        self._aerospike_connector.remove((self._namespace, self._signs_set, str(user_id)))
 
     def put_friend(self, user_id, friend_user_id):
         relation_key = '{}:{}'.format(user_id, friend_user_id)
@@ -87,6 +155,27 @@ class UsersEngine(object):
         result.cursor_code = next_cursor.encode()
 
         return result
+
+    def put_external_link(self, user_id, external_id):
+        if external_id == None:
+            return
+        link_key = (self._namespace, self._external_to_local_set, external_id)
+        record = {
+            'user_id': str(user_id)
+        }
+        self._aerospike_connector.put_bins(link_key, record)
+
+    def external_to_local_id(self, external_id):
+        if external_id == None:
+            return None
+        link_key = (self._namespace, self._external_to_local_set, external_id)
+        record = self._aerospike_connector.get_bins(link_key)
+        if record == None:
+            return None
+        user_id = record.get('user_id')
+        if user_id == None:
+            raise APILogicalError('External link record({}) has no user_id bin'.format(external_id))
+        return int(user_id)
 
     def external_to_local_id_many(self, external_ids):
         keys = list()

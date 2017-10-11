@@ -63,6 +63,7 @@ class SignsEngine(object):
         self._image_set = 'sign_image'
         self._image_thumb_set = 'sign_image_thumbnail'
         self._preview_set = 'sign_preview'
+        self._access_set = 'relations_user_sign'
         self._searcher_host = '174.138.38.144'
         self._searcher_port = 28000
         self._searcher_req_timeout = 0.1
@@ -118,6 +119,13 @@ class SignsEngine(object):
         }
         self._aerospike_connector.put_bins((self._namespace, self._info_set, str(sign_id)), update)
 
+    def grant_sign_access(self, user_id, sign_id):
+        key = '{}:{}'.format(user_id, sign_id)
+        data = {
+            'data': '{}'
+        }
+        self._aerospike_connector.put_bins((self._namespace, self._access_set, key), data)
+
     def _gen_sign_id(self, info, object_blob):
         hasher = hashlib.md5()
         def _update(value):
@@ -152,6 +160,22 @@ class SignsEngine(object):
             logging.error('Bad info record, {}'.format(ex))
             raise APILogicalError('Bad info record, {}'.format(ex))
         return info
+
+    def get_info_many(self, sign_ids):
+        keys = list()
+        for sign_id in sign_ids:
+            keys.append((self._namespace, self._info_set, str(sign_id)))
+        records = self._aerospike_connector.get_bins_many(keys)
+
+        result = list()
+        for record in records:
+            if record == None:
+                result.append(None)
+            else:
+                info = SignInfo()
+                info.decode(record)
+                result.append(info)
+        return result
 
     def _put_features(self, sign_id, features):
         info_key = (self._namespace, self._features_set, str(sign_id))
@@ -212,6 +236,67 @@ class SignsEngine(object):
 
         if result.get('sign_id') == None:
             raise APIInternalServicesError('Searcher put request failed: Bad response: {}'.format(resp.text))
+
+    def search_signs(self, user_id, lat, lon, radius, max_n, min_rank, sort_by, debug, features):
+        signs, debug = self._ask_searcher(user_id, lat, lon, radius, max_n, min_rank, sort_by, debug, features)
+        sign_ids = list()
+        for sign in signs:
+            sign_ids.append(sign['sign_id'])
+
+        # TODO
+        info_list = self.get_info_many(sign_ids)
+        has_access_list = self._check_access(user_id, sign_ids)
+
+        result = list()
+        for i in range(len(signs)):
+            info = info_list[i]
+            if info == None:
+                logging.warning('Found removed sign or logical error, sign_id = {}'.format(sign_ids[i]))
+                continue
+            if info.is_private and info.user_id != user_id and not has_access_list[i]:
+                continue
+            result.append(signs[i])
+        return result, debug
+
+    def _ask_searcher(self, user_id, lat, lon, radius, max_n, min_rank, sort_by, debug, features):
+        logging.info('_ask_searcher: Retrieve signs')
+        try:
+            request = {
+                'user_id': user_id,
+                'latitude': lat,
+                'longitude': lon,
+                'radius': radius,
+                'max_n': max_n,
+                'min_rank': min_rank,
+                'features': features
+            }
+            if sort_by != None:
+                request['sort_by'] = sort_by
+            if debug != None:
+                request['debug'] = debug
+
+            url = 'http://{}:{}/api/sign/search'.format(self._searcher_host, self._searcher_port)
+            resp = requests.post(url, data=json.dumps(request), timeout=self._searcher_req_timeout)
+            result = json.loads(resp.text)
+        except Exception as ex:
+            logging.error('Searcher search request failed: {}'.format(ex))
+            raise APIInternalServicesError('Searcher search request failed: {}'.format(ex))
+
+        signs = result.get('signs')
+        if signs == None:
+            raise APIInternalServicesError('Searcher search request failed: Bad response: {}'.format(resp.text))
+
+        debug = result.get('debug')
+
+        logging.info('_ask_searcher: Got {} signs'.format(len(signs)))
+        return signs, debug
+
+    def _check_access(self, user_id, sign_ids):
+        keys = list()
+        for sign_id in sign_ids:
+            key = '{}:{}'.format(user_id, sign_id)
+            keys.append((self._namespace, self._access_set, key))
+        return self._aerospike_connector.check_exists_many(keys)
 
 
 if __name__ == "__main__":
