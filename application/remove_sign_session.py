@@ -11,7 +11,7 @@ class RemoveSignQuery(Query):
 
     def parse(self, data):
         tree = self._parse_json(data)
-        self.user_token = self._get_optional_int64(tree, 'user_token')
+        self.user_token = self._get_optional_str(tree, 'user_token')
         self.sign_id = self._get_required_int64(tree, 'sign_id')
 
 
@@ -25,7 +25,7 @@ class RemoveSignSession:
         self._query.parse(data)
 
     def execute(self):
-        info = self._sign_engine.remove_sign(self._query.sign_id)
+        self._sign_engine.remove_sign(self._query.sign_id)
 
         return json.dumps({'success': True})
 

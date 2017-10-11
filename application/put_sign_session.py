@@ -71,6 +71,8 @@ class PutSignSession(object):
         self._query.parse(data)
 
     def execute(self):
+        logging.info('Put sign, lat = {}, long = {}'.format(self._query.latitude, self._query.longitude))
+
         info = SignInfo()
         info.user_id = self._query.user_id
         info.latitude = self._query.latitude
@@ -89,6 +91,7 @@ class PutSignSession(object):
 
         self._users_engine.put_sign(info.user_id, sign_id)
 
+        logging.info('Put succeed, sign_id = {}'.format(sign_id))
         return json.dumps({'success': True, 'sign_id': sign_id})
 
 
