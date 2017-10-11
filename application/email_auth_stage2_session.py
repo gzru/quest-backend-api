@@ -1,6 +1,7 @@
 from query import Query
-from profile_session_base import UserInfo, ProfileSessionBase
+from profile_session_base import ProfileSessionBase
 from auth_engine import AuthEngine
+from users_engine import UsersEngine, UserInfo
 import json
 import logging
 
@@ -20,11 +21,11 @@ class EMailAuthStage2Query(Query):
         logging.info('auth_code: {}'.format(self.auth_code))
 
 
-class EMailAuthStage2Session(ProfileSessionBase):
+class EMailAuthStage2Session(object):
 
     def __init__(self, global_context):
-        super(EMailAuthStage2Session, self).__init__(global_context)
         self._auth_engine = AuthEngine()
+        self._users_engine = UsersEngine(global_context)
 
     def parse_query(self, data):
         self._query = EMailAuthStage2Query()
@@ -34,25 +35,34 @@ class EMailAuthStage2Session(ProfileSessionBase):
         email = self._auth_engine.auth_by_email_stage2(self._query.auth_code, self._query.auth_token)
 
         # Check user exists
-        user_id = self._get_external_link(email)
-        if user_id == None:
+        info = self._find_info(email)
+        if info == None:
             info = UserInfo()
             info.name = ''
             info.email = email
 
             # Generate user id
-            user_id = self._gen_user_id(info)
+            info.user_id = self._users_engine.gen_user_id(info)
 
             # Create profile
-            self._put_info(user_id, info)
-            self._put_external_link(user_id, email)
+            self._users_engine.put_info(info)
+            self._users_engine.put_external_link(info.user_id, email)
 
         result = {
             'success': True,
-            'user_id': int(user_id),
-            'user_token': str(user_id)
+            'user_id': int(info.user_id),
+            'user_token': str(info.user_id)
         }
         return json.dumps(result)
+
+    def _find_info(self, email):
+        user_id = self._users_engine.external_to_local_id(email)
+        if user_id == None:
+            return None
+        try:
+            return self._users_engine.get_info(user_id)
+        except:
+            return None
 
 
 if __name__ == "__main__":
