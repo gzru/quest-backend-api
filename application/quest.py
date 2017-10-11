@@ -9,6 +9,8 @@ from remove_sign_session import RemoveSignSession
 from preview_sign_session import PreviewSignSession
 from make_messaging_token_session import MakeMessagingTokenSession
 from get_matching_session import GetMatchingSession
+from search_signs_session import SearchSignsSession
+from grant_sign_access_session import GrantSignAccessSession
 
 from create_profile_session import CreateProfileSession
 from update_profile_session import UpdateProfileSession
@@ -19,6 +21,7 @@ from add_friends_session import AddFriendsSession
 from get_friends_session import GetFriendsSession
 from get_external_friends_session import GetExternalFriendsSession
 from get_user_signs_session import GetUserSignsSession
+from remove_user_session import RemoveUserSession
 
 from facebook_auth_session import FacebookAuthSession
 from email_auth_stage1_session import EMailAuthStage1Session
@@ -77,6 +80,14 @@ def get_remove():
 def preview_sign():
     return run_session(request.get_data(), PreviewSignSession)
 
+@application.route('/api/sign/search', methods=['POST'])
+def search_signs():
+    return run_session(request.get_data(), SearchSignsSession)
+
+@application.route('/api/sign/access/grant', methods=['POST'])
+def grant_sign_access():
+    return run_session(request.get_data(), GrantSignAccessSession)
+
 @application.route('/api/profile/create', methods=['POST'])
 def create_profile():
     return run_session(request.get_data(), CreateProfileSession)
@@ -112,6 +123,10 @@ def add_friends():
 @application.route('/api/profile/signs/get', methods=['POST'])
 def get_signs():
     return run_session(request.get_data(), GetSignsSession)
+
+@application.route('/api/profile/remove', methods=['POST'])
+def remove_user():
+    return run_session(request.get_data(), RemoveUserSession)
 
 @application.route('/api/messaging/token', methods=['POST'])
 def make_messaging_token():
