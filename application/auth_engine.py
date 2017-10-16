@@ -1,4 +1,5 @@
 from cipher import AESCipher
+from flask import render_template
 import smtplib
 import random
 import json
@@ -36,6 +37,7 @@ class AuthEngine(object):
         self._aes_secret = 'ifysvmukVlGYBQjQwY6J4bdi'
         self._robot_address = 'd.vasilyev@aiarlabs.com'
         self._robot_passwd = 'SVaQ7iEcnE'
+        self._confirm_deep_link = 'https://quest.aiarlabs.com/app/login/'
 
     def auth_by_email_stage1(self, user_email):
         code = AuthCode()
@@ -62,7 +64,7 @@ class AuthEngine(object):
             msg = "\r\n".join([
                 "Subject: Quest authentication",
                 "",
-                "Your authentication code: {}".format(auth_code)
+                render_template('email-inlined.html', HREF=(self._confirm_deep_link + str(auth_code)), PIN=auth_code)
             ])
 
             server = smtplib.SMTP('smtp.gmail.com')
@@ -74,4 +76,8 @@ class AuthEngine(object):
         except Exception as ex:
             logging.error(ex)
             raise Exception('Can\'t send email with auth code to {}'.format(user_email))
+
+
+if __name__ == '__main__':
+    pass
 

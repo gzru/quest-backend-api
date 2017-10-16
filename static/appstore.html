@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <script>
+function DetectAndServe(){
+if(navigator.userAgent.toLowerCase().indexOf("android") > -1){
+window.location.href = 'http://play.google.com/store/apps/details?id=com.aiarlabs.signquest&hl=en';
+}
+if(navigator.userAgent.toLowerCase().indexOf("iphone") > -1){
+window.location.href = 'https://itunes.apple.com/app/signquest/id1282453211';
+}
+};
+  </script>
+</head>
+<body onload="DetectAndServe()">
+Redirecting...
+</body>
+</html>
