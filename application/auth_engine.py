@@ -1,5 +1,7 @@
 from cipher import AESCipher
 from flask import render_template
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import smtplib
 import random
 import json
@@ -61,17 +63,15 @@ class AuthEngine(object):
 
     def _send_code(self, user_email, auth_code):
         try:
-            msg = "\r\n".join([
-                "Subject: Quest authentication",
-                "",
-                render_template('email-inlined.html', HREF=(self._confirm_deep_link + str(auth_code)), PIN=auth_code)
-            ])
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = "Subject: Quest authentication"
+            msg.attach(MIMEText(render_template('email-inlined.html', HREF=(self._confirm_deep_link + str(auth_code)), PIN=auth_code), 'html'))
 
             server = smtplib.SMTP('smtp.gmail.com')
             server.ehlo()
             server.starttls()
             server.login(self._robot_address, self._robot_passwd)
-            server.sendmail(self._robot_address, user_email, msg)
+            server.sendmail(self._robot_address, user_email, msg.as_string())
             server.quit()
         except Exception as ex:
             logging.error(ex)
