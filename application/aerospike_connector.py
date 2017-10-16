@@ -93,7 +93,7 @@ class AerospikeConnector:
             return None
 
         data = bins.get('data')
-        if not data:
+        if data == None:
             logging.error('Missed data bin')
             raise APILogicalError('Missed data bin')
 
