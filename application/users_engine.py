@@ -73,6 +73,24 @@ class UserInfo(object):
         self.email = data.get('email')
 
 
+class UsersRelation(object):
+
+    def __init__(self):
+        self.is_friends = None
+        self.twilio_channel = None
+
+    def encode(self):
+        record = {
+            'friends': int(self.is_friends),
+            'twilio_channel': self.twilio_channel
+        }
+        return record
+
+    def decode(self, record):
+        self.is_friends = bool(record.get('friends', False))
+        self.twilio_channel = record.get('twilio_channel')
+
+
 # TODO: Buckets
 class UsersEngine(object):
 
@@ -81,9 +99,9 @@ class UsersEngine(object):
         self._namespace = 'test'
         self._info_set = 'user_info'
         self._friends_set = 'user_friends'
-        self._friends_bin = 'data'
         self._signs_set = 'user_signs'
-        self._signs_bin = 'data'
+        self._likes_set = 'user_likes'
+        self._views_set = 'user_views'
         self._external_to_local_set = 'user_external_to_local'
         self._relations_set = 'relations_user_user'
 
@@ -121,40 +139,19 @@ class UsersEngine(object):
         self._aerospike_connector.remove((self._namespace, self._signs_set, str(user_id)))
 
     def put_friend(self, user_id, friend_user_id):
-        relation_key = '{}:{}'.format(user_id, friend_user_id)
+        relation_key = self._make_relation_key(user_id, friend_user_id)
         if self._aerospike_connector.check_exists((self._namespace, self._relations_set, relation_key)):
             raise Exception('Users already friends')
 
-        self._aerospike_connector.list_append((self._namespace, self._friends_set, str(user_id)), self._friends_bin, int(friend_user_id))
-        self._aerospike_connector.put_bins((self._namespace, self._relations_set, relation_key), {'friends': 1})
+        relation = UsersRelation()
+        relation.is_friends = True
+        relation.twilio_channel = ""
+
+        self._put_item_to_list((self._namespace, self._friends_set, str(user_id)), int(friend_user_id))
+        self._aerospike_connector.put_bins((self._namespace, self._relations_set, relation_key), relation.encode())
 
     def get_friends(self, user_id, limit, cursor_code):
-        user_key = (self._namespace, self._friends_set, str(user_id))
-
-        result = DataPage()
-
-        cursor = Cursor()
-        cursor.decode(cursor_code)
-
-        friends_count = self._aerospike_connector.list_size(user_key, self._friends_bin)
-        query_count = limit
-        if cursor.offset + query_count >= friends_count:
-            query_count = friends_count - cursor.offset
-            result.has_next = False
-        else:
-            result.has_next = True
-
-        if query_count <= 0:
-            return result
-
-        result.data = self._aerospike_connector.list_get_range(user_key, self._friends_bin, cursor.offset, query_count)
-        if result.data == None:
-            raise APILogicalError('Can\'t get friends range from database')
-
-        next_cursor = Cursor(0, cursor.offset + query_count)
-        result.cursor_code = next_cursor.encode()
-
-        return result
+        return self._get_items_from_list((self._namespace, self._friends_set, str(user_id)), limit, cursor_code)
 
     def put_external_link(self, user_id, external_id):
         if external_id == None:
@@ -196,19 +193,32 @@ class UsersEngine(object):
                     local_ids.append(int(user_id))
         return local_ids
 
-    def check_friends_many(self, user_id, friends_ids):
+    def get_relations_many(self, user_id, friends_ids):
         keys = list()
         for friend_user_id in friends_ids:
-            keys.append((self._namespace, self._relations_set, '{}:{}'.format(user_id, friend_user_id)))
+            keys.append((self._namespace, self._relations_set, self._make_relation_key(user_id, friend_user_id)))
 
         res = self._aerospike_connector.get_bins_many(keys)
 
-        check_results = list()
+        results = list()
         for entry in res:
             if entry == None:
-                check_results.append(False)
+                results.append(False)
             else:
+                relation = UsersRelation()
+                relation.decode(entry)
+                results.append(relation)
+        return results
+
+    def check_friends_many(self, user_id, friends_ids):
+        res = self.get_relations_many(self, user_id, friends_ids)
+
+        check_results = list()
+        for relation in res:
+            if relation != None or relation.is_friends == True:
                 check_results.append(True)
+            else:
+                check_results.append(False)
         return check_results
 
     def search(self, keywords):
@@ -229,20 +239,36 @@ class UsersEngine(object):
         return result
 
     def put_sign(self, user_id, sign_id):
-        self._aerospike_connector.list_append((self._namespace, self._signs_set, str(user_id)), self._signs_bin, int(sign_id))
+        self._put_item_to_list((self._namespace, self._signs_set, str(user_id)), int(sign_id))
 
     def get_signs(self, user_id, limit, cursor_code):
-        user_key = (self._namespace, self._signs_set, str(user_id))
+        return self._get_items_from_list((self._namespace, self._signs_set, str(user_id)), limit, cursor_code)
 
+    def put_like(self, user_id, sign_id):
+        self._put_item_to_list((self._namespace, self._likes_set, str(user_id)), int(sign_id))
+
+    def get_likes(self, user_id, limit, cursor_code):
+        return self._get_items_from_list((self._namespace, self._likes_set, str(user_id)), limit, cursor_code)
+
+    def put_view(self, user_id, sign_id):
+        self._put_item_to_list((self._namespace, self._views_set, str(user_id)), int(sign_id))
+
+    def get_views(self, user_id, limit, cursor_code):
+        return self._get_items_from_list((self._namespace, self._views_set, str(user_id)), limit, cursor_code)
+
+    def _put_item_to_list(self, user_key, item):
+        self._aerospike_connector.list_append(user_key, 'data', item)
+
+    def _get_items_from_list(self, user_key, limit, cursor_code):
         result = DataPage()
 
         cursor = Cursor()
         cursor.decode(cursor_code)
 
-        signs_count = self._aerospike_connector.list_size(user_key, self._signs_bin)
+        items_count = self._aerospike_connector.list_size(user_key, 'data')
         query_count = limit
-        if cursor.offset + query_count >= signs_count:
-            query_count = signs_count - cursor.offset
+        if cursor.offset + query_count >= items_count:
+            query_count = items_count - cursor.offset
             result.has_next = False
         else:
             result.has_next = True
@@ -250,14 +276,20 @@ class UsersEngine(object):
         if query_count <= 0:
             return result
 
-        result.data = self._aerospike_connector.list_get_range(user_key, self._signs_bin, cursor.offset, query_count)
+        result.data = self._aerospike_connector.list_get_range(user_key, 'data', cursor.offset, query_count)
         if result.data == None:
-            raise APILogicalError('Can\'t get signs range from database')
+            raise APILogicalError('Can\'t get items range from database')
 
         next_cursor = Cursor(0, cursor.offset + query_count)
         result.cursor_code = next_cursor.encode()
 
         return result
+
+    def _make_relation_key(self, user_id1, user_id2):
+        if user_id1 < user_id2:
+            return '{}:{}'.format(user_id1, user_id2)
+        else:
+            return '{}:{}'.format(user_id2, user_id1)
 
 
 if __name__ == "__main__":
@@ -265,6 +297,8 @@ if __name__ == "__main__":
     global_context.initialize()
 
     ue = UsersEngine(global_context)
+    ue.put_view(123, 345)
+    print ue.get_views(123, 10, '').data
     #print ue.search("ivan")
 
     #ue.put_friend(123, 346)
