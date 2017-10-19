@@ -1,5 +1,7 @@
 from aerospike_connector import AerospikeConnector
 from kafka_connector import KafkaConnector
+from searcher_connector import SearcherConnector
+from twilio_connector import TwilioConnector
 import settings
 
 
@@ -8,6 +10,8 @@ class GlobalContext:
     def __init__(self):
         self.aerospike_connector = None
         self.kafka_connector = None
+        self.searcher_connector = None
+        self.twilio_connector = None
 
     def initialize(self):
         self.aerospike_connector = AerospikeConnector(max_record_size=settings.AEROSPIKE_MAX_RECORD_SIZE, \
@@ -20,3 +24,7 @@ class GlobalContext:
                                               send_message_timeout_sec=settings.KAFKA_SEND_MESSAGE_TIMEOUT_SEC)
         if not self.kafka_connector.connect(settings.KAFKA_HOSTS):
             raise Exception('Can\'t connect to kafka')
+
+        self.searcher_connector = SearcherConnector()
+        self.twilio_connector = TwilioConnector()
+
