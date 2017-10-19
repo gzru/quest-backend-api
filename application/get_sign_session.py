@@ -50,7 +50,8 @@ class GetSignSession:
             'longitude': info.longitude,
             'radius': info.radius,
             'timestamp': info.timestamp,
-            'time_to_live': info.time_to_live
+            'time_to_live': info.time_to_live,
+            'is_private': info.is_private
         }
 
         if 'meta_blob' in self._query.properties:
