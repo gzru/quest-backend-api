@@ -7,12 +7,16 @@ import logging
 class AddFriendsQuery(Query):
 
     def __init__(self):
+        self.user_token = None
         self.user_id = None
         self.friend_user_id = None
 
     def parse(self, data):
         tree = self._parse_json(data)
-        self.user_id = self._get_required_int64(tree, 'user_id')
+        self.user_token = self._get_required_str(tree, 'user_token')
+        self.user_id = self._get_optional_int64(tree, 'user_id')
+        if self.user_id == None:
+            self.user_id = int(self.user_token)
         self.friend_user_id = self._get_required_int64(tree, 'friend_user_id')
 
 
