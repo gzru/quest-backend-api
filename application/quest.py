@@ -11,6 +11,14 @@ from make_messaging_token_session import MakeMessagingTokenSession
 from get_matching_session import GetMatchingSession
 from search_signs_session import SearchSignsSession
 from grant_sign_access_session import GrantSignAccessSession
+from map_signs_clusters import MapSignsClustersSession
+from add_sign_like_session import AddSignLikeSession
+from add_sign_view_session import AddSignViewSession
+from check_sign_like_session import CheckSignLikeSession
+from check_sign_view_session import CheckSignViewSession
+from get_user_likes_session import GetUserLikesSession
+from get_user_views_session import GetUserViewsSession
+from make_sign_public_link import MakeSignPublicLinkSession
 
 from create_profile_session import CreateProfileSession
 from update_profile_session import UpdateProfileSession
@@ -84,9 +92,41 @@ def preview_sign():
 def search_signs():
     return run_session(request.get_data(), SearchSignsSession)
 
+@application.route('/api/sign/clustering/map', methods=['POST'])
+def map_signs_clusters():
+    return run_session(request.get_data(), MapSignsClustersSession)
+
 @application.route('/api/sign/access/grant', methods=['POST'])
 def grant_sign_access():
     return run_session(request.get_data(), GrantSignAccessSession)
+
+@application.route('/api/sign/likes/add', methods=['POST'])
+def add_sign_like():
+    return run_session(request.get_data(), AddSignLikeSession)
+
+@application.route('/api/sign/views/add', methods=['POST'])
+def add_sign_view():
+    return run_session(request.get_data(), AddSignViewSession)
+
+@application.route('/api/sign/likes/find', methods=['POST'])
+def check_sign_like():
+    return run_session(request.get_data(), CheckSignLikeSession)
+
+@application.route('/api/sign/views/find', methods=['POST'])
+def check_sign_view():
+    return run_session(request.get_data(), CheckSignViewSession)
+
+@application.route('/api/sign/publiclink', methods=['POST'])
+def make_sign_public_link_view():
+    return run_session(request.get_data(), MakeSignPublicLinkSession)
+
+@application.route('/api/profile/likes/get', methods=['POST'])
+def get_user_likes():
+    return run_session(request.get_data(), GetUserLikesSession)
+
+@application.route('/api/profile/views/get', methods=['POST'])
+def get_user_views():
+    return run_session(request.get_data(), GetUserViewsSession)
 
 @application.route('/api/profile/create', methods=['POST'])
 def create_profile():
@@ -122,7 +162,7 @@ def add_friends():
 
 @application.route('/api/profile/signs/get', methods=['POST'])
 def get_signs():
-    return run_session(request.get_data(), GetSignsSession)
+    return run_session(request.get_data(), GetUserSignsSession)
 
 @application.route('/api/profile/remove', methods=['POST'])
 def remove_user():
