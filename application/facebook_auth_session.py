@@ -16,8 +16,8 @@ class FacebookAuthQuery(Query):
         self.access_token = self._get_required_str(tree, 'facebook_access_token')
         self.facebook_user_id = self._get_required_str(tree, 'facebook_user_id')
 
-        logging.error('facebook_access_token: {}'.format(self.access_token))
-        logging.error('facebook_user_id: {}'.format(self.facebook_user_id))
+        logging.info('facebook_access_token: {}'.format(self.access_token))
+        logging.info('facebook_user_id: {}'.format(self.facebook_user_id))
 
 
 class FacebookAuthSession(ProfileSessionBase):

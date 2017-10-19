@@ -88,6 +88,6 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = GetUserSignsSession(global_context)
-    s.parse_query('{ "user_token": "123", "user_id": 123, "limit": 1, "privacy": "PUBLIC" }')
+    s.parse_query('{ "user_token": "4553717682174717370", "user_id": 4553717682174717370, "limit": 24, "privacy": "PUBLIC" }')
     print s.execute()
 

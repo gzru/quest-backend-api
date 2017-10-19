@@ -63,9 +63,10 @@ class GetMatchingSession(object):
     def _prepare_image_data(self, data):
         buf = BytesIO()
         img = Image.open(BytesIO(data))
-        size_before = img.size
+
+        logging.info('Prepare image, base size {}'.format(img.size))
+
         img.thumbnail((400, 400))
-        logging.error('Resize image from {} to {}'.format(size_before, img.size))
         img.save(buf, format='JPEG')
         return base64.b64encode(buf.getvalue())
 
@@ -117,6 +118,7 @@ if __name__ == "__main__":
 
     s = GetMatchingSession(global_context)
     s._prepare_image_data(base64.b64decode(data))
+    #s._send_one_request((1, data))
     #s.parse_query(json.dumps(query))
     #print s.execute()
 
