@@ -1,5 +1,6 @@
 from query import Query
 from profile_session_base import UserInfo, ProfileSessionBase
+from error import APILogicalError
 import json
 import requests
 import logging
@@ -8,13 +9,17 @@ import logging
 class GetExternalFriendsQuery(Query):
 
     def __init__(self):
+        self.user_token = None
         self.user_id = None
         self.limit = None
         self.cursor = None
 
     def parse(self, data):
         tree = self._parse_json(data)
-        self.user_id = self._get_required_int64(tree, 'user_id')
+        self.user_token = self._get_required_str(tree, 'user_token')
+        self.user_id = self._get_optional_int64(tree, 'user_id')
+        if self.user_id == None:
+            self.user_id = int(self.user_token)
 
         self.limit = self._get_optional_int64(tree, 'limit')
         if self.limit == None:
@@ -32,9 +37,12 @@ class GetExternalFriendsSession(ProfileSessionBase):
         self._query.parse(data)
 
     def execute(self):
-        info = self._get_info(self._query.user_id)
-        facebook_user_id = info['facebook_user_id']
-        facebook_access_token = info['facebook_access_token']
+        info = self._engine._get_info(self._query.user_id)
+        if info == None:
+            raise APILogicalError('User {} not found'.format(self._query.user_id))
+
+        facebook_user_id = info.facebook_user_id
+        facebook_access_token = info.facebook_access_token
 
         friends = list()
 
@@ -80,6 +88,7 @@ class GetExternalFriendsSession(ProfileSessionBase):
             raise
 
         result = {
+            'success': True,
             'data': friends,
             'paging': { 'cursor': cursor, 'has_next': has_next }
         }
