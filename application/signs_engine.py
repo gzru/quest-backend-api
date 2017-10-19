@@ -1,4 +1,5 @@
 from error import APILogicalError, APIInternalServicesError
+from searcher_connector import SearcherMapClustersQParams
 import hashlib
 import requests
 import logging
@@ -55,6 +56,7 @@ class SignsEngine(object):
     def __init__(self, global_context):
         self._aerospike_connector = global_context.aerospike_connector
         self._kafka_connector = global_context.kafka_connector
+        self._searcher_connector = global_context.searcher_connector
         self._namespace = 'test'
         self._info_set = 'sign_info'
         self._features_set = 'sign_features'
@@ -258,6 +260,9 @@ class SignsEngine(object):
             result.append(signs[i])
         return result, debug
 
+    def get_signs_clusters(self, params):
+        return self._searcher_connector.get_map_clusters(params)
+
     def _ask_searcher(self, user_id, lat, lon, radius, max_n, min_rank, sort_by, debug, features):
         logging.info('_ask_searcher: Retrieve signs')
         try:
@@ -298,6 +303,56 @@ class SignsEngine(object):
             keys.append((self._namespace, self._access_set, key))
         return self._aerospike_connector.check_exists_many(keys)
 
+    def add_sign_like(self, user_id, sign_id):
+        key = '{}:{}'.format(user_id, sign_id)
+        record = self._aerospike_connector.get_bins((self._namespace, self._access_set, key))
+        if record != None and 'like' in record:
+            raise APILogicalError('Sign have been liked already')
+
+        data = {
+            'like': '1'
+        }
+        self._aerospike_connector.put_bins((self._namespace, self._access_set, key), data)
+
+    def add_sign_view(self, user_id, sign_id):
+        key = '{}:{}'.format(user_id, sign_id)
+        record = self._aerospike_connector.get_bins((self._namespace, self._access_set, key))
+        if record != None and 'view' in record:
+            raise APILogicalError('Sign have been viewed already')
+
+        data = {
+            'view': '1'
+        }
+        self._aerospike_connector.put_bins((self._namespace, self._access_set, key), data)
+
+    def check_likes(self, user_id, sign_ids):
+        keys = list()
+        for sign_id in sign_ids:
+            key = '{}:{}'.format(user_id, sign_id)
+            keys.append((self._namespace, self._access_set, key))
+        records = self._aerospike_connector.get_bins_many(keys)
+        result = list()
+        for record in records:
+            if record == None or 'like' not in record:
+                result.append(False)
+            else:
+                result.append(True)
+        return result
+
+    def check_views(self, user_id, sign_ids):
+        keys = list()
+        for sign_id in sign_ids:
+            key = '{}:{}'.format(user_id, sign_id)
+            keys.append((self._namespace, self._access_set, key))
+        records = self._aerospike_connector.get_bins_many(keys)
+        result = list()
+        for record in records:
+            if record == None or 'view' not in record:
+                result.append(False)
+            else:
+                result.append(True)
+        return result
+
 
 if __name__ == "__main__":
     from global_context import GlobalContext
@@ -305,18 +360,8 @@ if __name__ == "__main__":
     global_context.initialize()
 
     se = SignsEngine(global_context)
-
-    info = SignInfo()
-    info.user_id = 123
-    info.latitude = 1;
-    info.longitude = 2;
-    info.radius = 100;
-
-    features = [1, 2, 3]
-    meta_blob = 'a'
-    object_blob = 'ab'
-    image_blob = 'abc'
-    preview_blob = 'abcd'
+    se.add_sign_like(123, 345)
+    print se.check_likes(123, [345, 567])
 
     #info.sign_id = se._gen_sign_id(info, object_blob)
 
