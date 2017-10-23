@@ -46,6 +46,7 @@ class UserInfo(object):
         self.facebook_user_id = None
         self.facebook_access_token = None
         self.name = None
+        self.username = None
         self.email = None
 
     def encode(self):
@@ -55,22 +56,33 @@ class UserInfo(object):
             'facebook_user_id': self.facebook_user_id,
             'facebook_access_token': self.facebook_access_token,
             'name': self.name,
+            'username': self.username,
             'email': self.email
         }
         # a record itself
         record = {
             'data': json.dumps(data),
+            'user_id': self.user_id,
+            'fb_user_id': self.facebook_user_id,
+            'fb_token': self.facebook_access_token,
+            'name': self.name,
+            'username': self.username,
+            'email': self.email
         }
         return record
 
     def decode(self, record):
-        # blob
+        # TODO: remove data json
         data = json.loads(record['data'])
-        self.user_id = data['user_id']
-        self.facebook_user_id = data.get('facebook_user_id')
-        self.facebook_access_token = data.get('facebook_access_token')
-        self.name = data.get('name')
-        self.email = data.get('email')
+        def _get(prop):
+            return record.get(prop, data.get(prop))
+
+        self.user_id = _get('user_id')
+        self.facebook_user_id = record.get('fb_user_id', data.get('facebook_user_id'))
+        self.facebook_access_token = record.get('fb_token', data.get('facebook_access_token'))
+        self.name = _get('name')
+        self.username = _get('username')
+        self.email = _get('email')
 
 
 class UsersRelation(object):
@@ -96,8 +108,10 @@ class UsersEngine(object):
 
     def __init__(self, global_context):
         self._aerospike_connector = global_context.aerospike_connector
+        self._twilio_connector = global_context.twilio_connector
         self._namespace = 'test'
         self._info_set = 'user_info'
+        self._picture_set = 'user_picture'
         self._friends_set = 'user_friends'
         self._signs_set = 'user_signs'
         self._likes_set = 'user_likes'
@@ -133,6 +147,18 @@ class UsersEngine(object):
             raise APILogicalError('Bad info record, {}'.format(ex))
         return info
 
+    def put_picture(self, user_id, picture):
+        pic_key = (self._namespace, self._picture_set, str(user_id))
+        if not self._aerospike_connector.put_data(pic_key, picture):
+            raise Exception('Can\'t save picture blob')
+
+    def get_picture(self, user_id):
+        pic_key = (self._namespace, self._picture_set, str(user_id))
+        data = self._aerospike_connector.get_data(pic_key)
+        if data == None:
+            return None
+        return base64.b64encode(data)
+
     def remove_user(self, user_id):
         self._aerospike_connector.remove((self._namespace, self._info_set, str(user_id)))
         self._aerospike_connector.remove((self._namespace, self._friends_set, str(user_id)))
@@ -145,9 +171,10 @@ class UsersEngine(object):
 
         relation = UsersRelation()
         relation.is_friends = True
-        relation.twilio_channel = ""
+        relation.twilio_channel = self._twilio_connector.create_channel(user_id, friend_user_id)
 
         self._put_item_to_list((self._namespace, self._friends_set, str(user_id)), int(friend_user_id))
+        self._put_item_to_list((self._namespace, self._friends_set, str(friend_user_id)), int(user_id))
         self._aerospike_connector.put_bins((self._namespace, self._relations_set, relation_key), relation.encode())
 
     def get_friends(self, user_id, limit, cursor_code):
@@ -203,7 +230,7 @@ class UsersEngine(object):
         results = list()
         for entry in res:
             if entry == None:
-                results.append(False)
+                results.append(None)
             else:
                 relation = UsersRelation()
                 relation.decode(entry)
@@ -211,11 +238,11 @@ class UsersEngine(object):
         return results
 
     def check_friends_many(self, user_id, friends_ids):
-        res = self.get_relations_many(self, user_id, friends_ids)
+        res = self.get_relations_many(user_id, friends_ids)
 
         check_results = list()
         for relation in res:
-            if relation != None or relation.is_friends == True:
+            if relation != None and relation.is_friends == True:
                 check_results.append(True)
             else:
                 check_results.append(False)
@@ -297,8 +324,7 @@ if __name__ == "__main__":
     global_context.initialize()
 
     ue = UsersEngine(global_context)
-    ue.put_view(123, 345)
-    print ue.get_views(123, 10, '').data
+    print ue.get_info(8147102016349374469).encode()
     #print ue.search("ivan")
 
     #ue.put_friend(123, 346)
