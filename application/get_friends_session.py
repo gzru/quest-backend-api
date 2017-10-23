@@ -41,7 +41,7 @@ class GetFriendsSession(ProfileSessionBase):
         friends = list()
         # Retrieve aux data
         for i, user_id in enumerate(page.data):
-            if not relations[i].is_friends:
+            if relations[i] == None or not relations[i].is_friends:
                 continue
 
             profile = dict()
