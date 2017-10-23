@@ -37,7 +37,7 @@ class GetExternalFriendsSession(ProfileSessionBase):
         self._query.parse(data)
 
     def execute(self):
-        info = self._engine._get_info(self._query.user_id)
+        info = self._engine.get_info(self._query.user_id)
         if info == None:
             raise APILogicalError('User {} not found'.format(self._query.user_id))
 
@@ -53,7 +53,7 @@ class GetExternalFriendsSession(ProfileSessionBase):
             parsed = json.loads(resp.text)
             # check errors
             error = parsed.get('error')
-            if error:
+            if error != None:
                 logging.error('Facebook error: {}'.format(error.get('message')))
                 raise Exception('Can\'t get data from Facebook')
             # take profiles
@@ -111,16 +111,13 @@ class GetExternalFriendsSession(ProfileSessionBase):
 
         return (cursor, has_next)
 
-"""
-from global_context import GlobalContext
-global_context = GlobalContext()
-global_context.initialize()
 
-s = GetExternalFriendsSession(global_context)
-s.parse_query('{ "user_id": 123, "limit": 1 }')
-print s.execute()
+if __name__ == "__main__":
+    from global_context import GlobalContext
+    global_context = GlobalContext()
+    global_context.initialize()
 
-s.parse_query('{ "user_id": 123, "limit": 2, "cursor": "QVFIUllzd0dQdDdrcWd5eWFiWWtCQ0dqQmsxSXVyeUhycGlnNnQwTDk3bEFTb1JUeUNOMEgyNzU3QzZAvNjVIelBZAWHYZD" }')
-print s.execute()
-"""
+    s = GetExternalFriendsSession(global_context)
+    s.parse_query('{"user_token": "8618994807331250316", "user_id": 8618994807331250316}')
+    print s.execute()
 

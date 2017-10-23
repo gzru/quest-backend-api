@@ -1,4 +1,5 @@
 from profile_session_base import UserInfo, ProfileQueryBase, ProfileSessionBase
+from error import APILogicalError
 import json
 import logging
 import requests
@@ -38,10 +39,24 @@ class GetProfileSession(ProfileSessionBase):
         logging.info('user_id = {}'.format(self._query.user_id))
 
     def execute(self):
-        result = self._get_info(self._query.user_id)
+        info = self._engine.get_info(self._query.user_id)
+        if info == None:
+            raise APILogicalError('User not found')
+
+        result = {
+            'user_id': info.user_id,
+            'facebook_user_id': info.facebook_user_id,
+            'facebook_access_token': info.facebook_access_token,
+            'name': info.name,
+            'username': info.username,
+            'email': info.email
+        }
 
         if 'meta_blob' in self._query.properties:
             result['meta_blob'] =  self._get_meta(self._query.user_id)
+
+        if 'picture_blob' in self._query.properties:
+            result['picture_blob'] =  self._engine.get_picture(self._query.user_id)
 
         if 'friends' in self._query.properties:
             facebook_user_id = result['facebook_user_id']
@@ -104,4 +119,14 @@ class GetProfileSession(ProfileSessionBase):
             self._put_external_link(info.user_id, facebook_user_id)
 
         return int(user_id)
+
+
+if __name__ == "__main__":
+    from global_context import GlobalContext
+    global_context = GlobalContext()
+    global_context.initialize()
+
+    s = GetProfileSession(global_context)
+    s.parse_query('{"user_id": 6823619285704494896}')
+    print s.execute()
 
