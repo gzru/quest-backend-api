@@ -25,6 +25,7 @@ class MapSignsClustersQuery(Query):
         self.searcher_params.screen_height = self._get_required_int64(screen, 'height')
 
         self.searcher_params.grid_size = self._get_required_int64(tree, 'grid_size')
+        self.searcher_params.signs_sample_size = self._get_optional_int64(tree, 'signs_sample_size')
 
 
 class MapSignsClustersSession(object):
@@ -52,6 +53,6 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = MapSignsClustersSession(global_context)
-    s.parse_query('{"map_view":{"center": {"latitude":55.7558, "longitude":37.6173}, "span": {"latitude": 5, "longitude": 20}}, "grid_size": 100, "screen": {"width":375, "height": 667}}')
+    s.parse_query('{"map_view":{"center": {"latitude":55.7558, "longitude":37.6173}, "span": {"latitude": 5, "longitude": 20}}, "grid_size": 100, "screen": {"width":375, "height": 667}, "signs_sample_size": 2}')
     print s.execute()
 
