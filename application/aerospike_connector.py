@@ -68,6 +68,16 @@ class AerospikeConnector:
             logging.error('Database error: {}'.format(ex))
             raise APIInternalServicesError('Database error: {}'.format(ex))
 
+    def remove_bin(self, key, bins):
+        try:
+            self._client.remove_bin(key, bins, policy=self._write_policy)
+        except aerospike.exception.RecordNotFound:
+            # May be it's error
+            pass
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
+
     def put_bins(self, key, bins, ttl=0):
         self._put_one(key, bins, ttl)
 
@@ -76,6 +86,13 @@ class AerospikeConnector:
 
     def get_bins_many(self, keys):
         return self._get_many(keys)
+
+    def increment(self, key, bin, value=1):
+        try:
+            self._client.increment(key, bin, value, policy=self._write_policy)
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
 
     def put_data(self, key, data, ttl=0):
         chunks = self._split_by_chunks(key, data)
@@ -149,6 +166,15 @@ class AerospikeConnector:
             return self._client.list_size(key, bin, policy=self._read_policy)
         except aerospike.exception.RecordNotFound:
             return 0
+        except Exception as ex:
+            logging.error('Database error: {}'.format(ex))
+            raise APIInternalServicesError('Database error: {}'.format(ex))
+
+    def list_remove(self, key, bin, index):
+        try:
+            return self._client.list_remove(key, bin, index, policy=self._write_policy)
+        except aerospike.exception.RecordNotFound:
+            return
         except Exception as ex:
             logging.error('Database error: {}'.format(ex))
             raise APIInternalServicesError('Database error: {}'.format(ex))
