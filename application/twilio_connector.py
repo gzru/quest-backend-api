@@ -17,7 +17,7 @@ class TwilioConnector(object):
 
     def make_messaging_token(self, user_id, uuid):
         try:
-            identity = '{}_{}'.format(user_id, uuid)
+            identity = str(user_id)
 
             # Create access token with credentials
             token = AccessToken(self._account_sid, self._api_key, self._api_secret, identity=identity)
@@ -40,7 +40,7 @@ class TwilioConnector(object):
             channel = client.chat \
                     .services(self._chat_service_sid) \
                     .channels \
-                    .create(friendly_name="")
+                    .create(friendly_name="", type="private")
 
             member1 = channel.members.create(str(user_id1))
             member2 = channel.members.create(str(user_id2))
@@ -51,9 +51,28 @@ class TwilioConnector(object):
             logging.error('create_channel failed, {}'.format(ex))
             raise APIInternalServicesError('create_channel failed')
 
+    def tt(self, user_id1):
+        try:
+            # Initialize the client
+            client = Client(self._account_sid, self._auth_token)
+
+            # Create the channel
+            members = client.chat \
+                    .services(self._chat_service_sid) \
+                    .channels('CH57718fb2132b42cf83727524e00559f9') \
+                    .members.list()
+            for m in members:
+                print m.identity
+
+        except Exception as ex:
+            logging.error('create_channel failed, {}'.format(ex))
+            raise APIInternalServicesError('create_channel failed')
+
 
 if __name__ == "__main__":
     se = TwilioConnector()
+
     #print se.make_messaging_token(123, 213)
     print se.create_channel(123, 12)
+    #print se.tt(123)
 
