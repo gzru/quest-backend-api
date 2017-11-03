@@ -18,6 +18,8 @@ class SignInfo(object):
         self.time_to_live = None
         self.timestamp = None
         self.is_private = True
+        self.likes_count = 0
+        self.views_count = 0
 
     def encode(self):
         # blob
@@ -33,22 +35,35 @@ class SignInfo(object):
         # a record itself
         record = {
             'data': json.dumps(data),
-            'is_private': int(self.is_private)
+            'sign_id': self.sign_id,
+            'user_id': self.user_id,
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'radius': self.radius,
+            'time_to_live': self.time_to_live,
+            'timestamp': self.timestamp,
+            'is_private': int(self.is_private),
+            'likes_count': self.likes_count,
+            'views_count': self.views_count
         }
         return record
 
     def decode(self, record):
-        # blob
+        # TODO: remove data json
         data = json.loads(record['data'])
-        self.sign_id = data['sign_id']
-        self.user_id = data['user_id']
-        self.latitude = data['latitude']
-        self.longitude = data['longitude']
-        self.radius = data['radius']
-        self.time_to_live = data['time_to_live']
-        self.timestamp = int(data['timestamp'])
-        # rest
+        def _get(prop):
+            return record.get(prop, data.get(prop))
+
+        self.sign_id = _get('sign_id')
+        self.user_id = _get('user_id')
+        self.latitude = _get('latitude')
+        self.longitude = _get('longitude')
+        self.radius = _get('radius')
+        self.time_to_live = _get('time_to_live')
+        self.timestamp = int(_get('timestamp'))
         self.is_private = bool(record.get('is_private', True))
+        self.likes_count = record.get('likes_count', 0)
+        self.views_count = record.get('views_count', 0)
 
 
 class SignsEngine(object):
@@ -57,6 +72,7 @@ class SignsEngine(object):
         self._aerospike_connector = global_context.aerospike_connector
         self._kafka_connector = global_context.kafka_connector
         self._searcher_connector = global_context.searcher_connector
+        self._s3connector = global_context.s3connector
         self._namespace = 'test'
         self._info_set = 'sign_info'
         self._features_set = 'sign_features'
@@ -201,12 +217,14 @@ class SignsEngine(object):
 
     def _put_image(self, sign_id, image_blob):
         self._aerospike_connector.put_data((self._namespace, self._image_set, str(sign_id)), image_blob)
+        self._s3connector.put_data_object('content', 'sign/{}/background'.format(sign_id), image_blob)
 
     def get_image(self, sign_id):
         return self._get_blob((self._namespace, self._image_set, str(sign_id)))
 
     def _put_preview(self, sign_id, preview_blob):
         self._aerospike_connector.put_data((self._namespace, self._preview_set, str(sign_id)), preview_blob)
+        self._s3connector.put_data_object('content', 'sign/{}/preview'.format(sign_id), preview_blob)
 
     def get_preview(self, sign_id):
         return self._get_blob((self._namespace, self._preview_set, str(sign_id)))
@@ -313,6 +331,7 @@ class SignsEngine(object):
             'like': '1'
         }
         self._aerospike_connector.put_bins((self._namespace, self._access_set, key), data)
+        self._aerospike_connector.increment((self._namespace, self._info_set, str(sign_id)), 'likes_count')
 
     def add_sign_view(self, user_id, sign_id):
         key = '{}:{}'.format(user_id, sign_id)
@@ -324,6 +343,25 @@ class SignsEngine(object):
             'view': '1'
         }
         self._aerospike_connector.put_bins((self._namespace, self._access_set, key), data)
+        self._aerospike_connector.increment((self._namespace, self._info_set, str(sign_id)), 'views_count')
+
+    def remove_sign_like(self, user_id, sign_id):
+        key = '{}:{}'.format(user_id, sign_id)
+        record = self._aerospike_connector.get_bins((self._namespace, self._access_set, key))
+        if record == None or 'like' not in record:
+            raise APILogicalError('Sign is not liked yet')
+
+        self._aerospike_connector.remove_bin((self._namespace, self._access_set, key), ['like'])
+        self._aerospike_connector.increment((self._namespace, self._info_set, str(sign_id)), 'likes_count', -1)
+
+    def remove_sign_view(self, user_id, sign_id):
+        key = '{}:{}'.format(user_id, sign_id)
+        record = self._aerospike_connector.get_bins((self._namespace, self._access_set, key))
+        if record == None or 'view' not in record:
+            raise APILogicalError('Sign is not viewed yet')
+
+        self._aerospike_connector.remove_bin((self._namespace, self._access_set, key), ['view'])
+        self._aerospike_connector.increment((self._namespace, self._info_set, str(sign_id)), 'views_count', -1)
 
     def check_likes(self, user_id, sign_ids):
         keys = list()
@@ -360,8 +398,10 @@ if __name__ == "__main__":
     global_context.initialize()
 
     se = SignsEngine(global_context)
-    se.add_sign_like(123, 345)
-    print se.check_likes(123, [345, 567])
+    #se.add_sign_like(123, 5435010004366254830)
+    #se.remove_sign_like(123, 5435010004366254830)
+    #print se.check_likes(5435010004366254830, [345, 567])
+    #print se.get_info(5435010004366254830).likes_count
 
     #info.sign_id = se._gen_sign_id(info, object_blob)
 
