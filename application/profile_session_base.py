@@ -1,18 +1,8 @@
 from query import Query, BadQuery
-from users_engine import UsersEngine
+from users_engine import UsersEngine, UserInfo
 import json
 import hashlib
 import base64
-
-
-class UserInfo(object):
-
-    def __init__(self):
-        self.user_id = None
-        self.email = None
-        self.facebook_user_id = None
-        self.facebook_access_token = None
-        self.name = None
 
 
 class ProfileQueryBase(Query):

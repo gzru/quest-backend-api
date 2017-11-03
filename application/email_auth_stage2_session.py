@@ -71,6 +71,6 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = EMailAuthStage2Session(global_context)
-    s.parse_query('{"auth_token": "eh7wj77ZzLSKciVaboAyHUah4HVCkP59LswgRICjBHrzXsPHSktYdtk/DDKPUJVbMHX43epZq/wlJWhZSIDNCQ==", "auth_code": 6278}')
+    s.parse_query('{"auth_token": "eh7wj77ZzLSKciVaboAyHUah4HVCkP59LswgRICjBHrzXsPHSktYdtk/DDKPUJVbMHX43epZq/wlJWhZSIDNCQ==", "auth_code": 627}')
     print s.execute()
 
