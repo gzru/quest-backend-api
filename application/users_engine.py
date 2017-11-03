@@ -109,6 +109,7 @@ class UsersEngine(object):
     def __init__(self, global_context):
         self._aerospike_connector = global_context.aerospike_connector
         self._twilio_connector = global_context.twilio_connector
+        self._s3connector = global_context.s3connector
         self._namespace = 'test'
         self._info_set = 'user_info'
         self._picture_set = 'user_picture'
@@ -149,8 +150,8 @@ class UsersEngine(object):
 
     def put_picture(self, user_id, picture):
         pic_key = (self._namespace, self._picture_set, str(user_id))
-        if not self._aerospike_connector.put_data(pic_key, picture):
-            raise Exception('Can\'t save picture blob')
+        self._aerospike_connector.put_data(pic_key, picture)
+        self._s3connector.put_data_object('content', 'profile/{}/picture'.format(user_id), picture)
 
     def get_picture(self, user_id):
         pic_key = (self._namespace, self._picture_set, str(user_id))
@@ -277,11 +278,17 @@ class UsersEngine(object):
     def get_likes(self, user_id, limit, cursor_code):
         return self._get_items_from_list((self._namespace, self._likes_set, str(user_id)), limit, cursor_code)
 
+    def remove_like(self, user_id, sign_id):
+        self._remove_item_from_list((self._namespace, self._likes_set, str(user_id)), int(sign_id))
+
     def put_view(self, user_id, sign_id):
         self._put_item_to_list((self._namespace, self._views_set, str(user_id)), int(sign_id))
 
     def get_views(self, user_id, limit, cursor_code):
         return self._get_items_from_list((self._namespace, self._views_set, str(user_id)), limit, cursor_code)
+
+    def remove_view(self, user_id, sign_id):
+        self._remove_item_from_list((self._namespace, self._views_set, str(user_id)), int(sign_id))
 
     def _put_item_to_list(self, user_key, item):
         self._aerospike_connector.list_append(user_key, 'data', item)
@@ -312,6 +319,15 @@ class UsersEngine(object):
 
         return result
 
+    def _remove_item_from_list(self, user_key, item):
+        items_count = self._aerospike_connector.list_size(user_key, 'data')
+        if items_count == 0:
+            raise APILogicalError('Can\'t remove item from empty list')
+        items = self._aerospike_connector.list_get_range(user_key, 'data', 0, items_count)
+        for i in range(len(items) - 1, -1, -1):
+            if items[i] == item:
+                self._aerospike_connector.list_remove(user_key, 'data', i)
+
     def _make_relation_key(self, user_id1, user_id2):
         if user_id1 < user_id2:
             return '{}:{}'.format(user_id1, user_id2)
@@ -324,11 +340,13 @@ if __name__ == "__main__":
     global_context.initialize()
 
     ue = UsersEngine(global_context)
-    print ue.get_info(8147102016349374469).encode()
+    #print ue.get_info(8147102016349374469).encode()
     #print ue.search("ivan")
 
-    #ue.put_friend(123, 346)
+    #ue.put_like(123, 346)
     #ue.get_friends(123, 3, '')
+    ue.remove_like(123, 346)
+    print ue.get_likes(123, 10, '').data
 
     #ue.put_sign(123, 5136828351633214532)
     #page = ue.get_signs(123, 1, '')
