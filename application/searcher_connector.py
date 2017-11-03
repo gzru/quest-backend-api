@@ -14,6 +14,7 @@ class SearcherMapClustersQParams(object):
         self.screen_width = None
         self.screen_height = None
         self.grid_size = None
+        self.signs_sample_size = None
 
 
 class SearcherConnector(object):
@@ -78,7 +79,8 @@ class SearcherConnector(object):
                     'width': params.screen_width,
                     'height': params.screen_height
                 },
-                'grid_size': params.grid_size
+                'grid_size': params.grid_size,
+                'signs_sample_size': params.signs_sample_size
             }
 
             url = 'http://{}:{}/api/sign/clustering/map'.format(self._searcher_host, self._searcher_port)
