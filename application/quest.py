@@ -4,6 +4,7 @@ from flask import Flask, jsonify, request
 
 from put_sign_session import PutSignSession
 from get_sign_session import GetSignSession
+from get_sign_stats_session import GetSignStatsSession
 from update_sign_session import UpdateSignSession
 from remove_sign_session import RemoveSignSession
 from preview_sign_session import PreviewSignSession
@@ -16,6 +17,8 @@ from add_sign_like_session import AddSignLikeSession
 from add_sign_view_session import AddSignViewSession
 from check_sign_like_session import CheckSignLikeSession
 from check_sign_view_session import CheckSignViewSession
+from remove_sign_like_session import RemoveSignLikeSession
+from remove_sign_view_session import RemoveSignViewSession
 from get_user_likes_session import GetUserLikesSession
 from get_user_views_session import GetUserViewsSession
 from make_sign_public_link import MakeSignPublicLinkSession
@@ -36,6 +39,7 @@ from email_auth_stage1_session import EMailAuthStage1Session
 from email_auth_stage2_session import EMailAuthStage2Session
 
 from global_context import GlobalContext
+from error import APIError
 import json
 import logging
 
@@ -53,12 +57,20 @@ def run_session(data, session_type):
         session = session_type(global_context)
         try:
             session.parse_query(data)
+        except APIError as ex:
+            response.status_code = 400
+            response.data = json.dumps({'success': False, 'error': {'message': ex.message, 'code': ex.code}})
+            return response
         except Exception as ex:
             response.status_code = 400
             response.data = json.dumps({'success': False, 'error': {'message': str(ex), 'code': 1}})
             return response
 
         result = session.execute()
+    except APIError as ex:
+        response.status_code = 500
+        response.data = json.dumps({'success': False, 'error': {'message': ex.message, 'code': ex.code}})
+        return response
     except Exception as ex:
         response.status_code = 500
         response.data = json.dumps({'success': False, 'error': {'message': str(ex), 'code': 1}})
@@ -75,6 +87,10 @@ def put_sign():
 @application.route('/api/sign/get', methods=['POST'])
 def get_sign():
     return run_session(request.get_data(), GetSignSession)
+
+@application.route('/api/sign/stats', methods=['POST'])
+def get_sign_stats():
+    return run_session(request.get_data(), GetSignStatsSession)
 
 @application.route('/api/sign/update', methods=['POST'])
 def update_sign():
@@ -115,6 +131,14 @@ def check_sign_like():
 @application.route('/api/sign/views/find', methods=['POST'])
 def check_sign_view():
     return run_session(request.get_data(), CheckSignViewSession)
+
+@application.route('/api/sign/likes/remove', methods=['POST'])
+def remove_sign_like():
+    return run_session(request.get_data(), RemoveSignLikeSession)
+
+@application.route('/api/sign/views/remove', methods=['POST'])
+def remove_sign_view():
+    return run_session(request.get_data(), RemoveSignViewSession)
 
 @application.route('/api/sign/publiclink', methods=['POST'])
 def make_sign_public_link_view():
