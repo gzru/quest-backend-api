@@ -1,4 +1,5 @@
 from cipher import AESCipher
+from error import APIInconsistentAuthCodeError, APIInternalServicesError, APILogicalError
 from flask import render_template
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -30,7 +31,7 @@ class AuthCode(object):
             self.expiration_timestamp = parsed.get('et')
         except Exception as ex:
             logging.error(ex)
-            raise Exception('Can\'t decode auth code')
+            raise APILogicalError('Can\'t decode auth code')
 
 
 class AuthEngine(object):
@@ -57,7 +58,8 @@ class AuthEngine(object):
         auth_code.decode(self._aes_secret, code_cipher)
 
         if auth_code.code != code:
-            raise Exception('Inconsistent code')
+            logging.error('Inconsistent code')
+            raise APIInconsistentAuthCodeError('Inconsistent code')
 
         return auth_code.email
 
@@ -75,7 +77,7 @@ class AuthEngine(object):
             server.quit()
         except Exception as ex:
             logging.error(ex)
-            raise Exception('Can\'t send email with auth code to {}'.format(user_email))
+            raise APIInternalServicesError('Can\'t send email with auth code to {}'.format(user_email))
 
 
 if __name__ == '__main__':
