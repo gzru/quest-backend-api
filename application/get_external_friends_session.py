@@ -41,9 +41,22 @@ class GetExternalFriendsSession(ProfileSessionBase):
         if info == None:
             raise APILogicalError('User {} not found'.format(self._query.user_id))
 
-        facebook_user_id = info.facebook_user_id
-        facebook_access_token = info.facebook_access_token
+        friends = list()
+        cursor = ''
+        has_next = False
 
+        if info.facebook_user_id != None and info.facebook_access_token != None:
+            friends, cursor, has_next = self._get_fb_friends(info.facebook_user_id, info.facebook_access_token)
+
+        result = {
+            'success': True,
+            'data': friends,
+            'paging': { 'cursor': cursor, 'has_next': has_next }
+        }
+
+        return json.dumps(result)
+
+    def _get_fb_friends(self, facebook_user_id, facebook_access_token):
         friends = list()
 
         page_uri = 'https://graph.facebook.com/{}/friends?access_token={}&limit={}&after={}'.format(facebook_user_id, facebook_access_token, self._query.limit, self._query.cursor)
@@ -87,13 +100,7 @@ class GetExternalFriendsSession(ProfileSessionBase):
             logging.error(ex)
             raise
 
-        result = {
-            'success': True,
-            'data': friends,
-            'paging': { 'cursor': cursor, 'has_next': has_next }
-        }
-
-        return json.dumps(result)
+        return (friends, cursor, has_next)
 
     def _parse_paging(self, paging):
         cursor = ''
@@ -118,6 +125,6 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = GetExternalFriendsSession(global_context)
-    s.parse_query('{"user_token": "8618994807331250316", "user_id": 8618994807331250316}')
+    s.parse_query('{"user_token": "8618994807331250316", "user_id": 6519738512993558563}')
     print s.execute()
 
