@@ -62,13 +62,13 @@ class GetProfileSession(ProfileSessionBase):
             facebook_user_id = result['facebook_user_id']
             facebook_access_token = result['facebook_access_token']
             if facebook_user_id != None and facebook_access_token != None:
-                result['friends'] = self._get_friends_fb(facebook_user_id, facebook_access_token)
+                result['friends'] = self._get_friends_fb(info.user_id, facebook_user_id, facebook_access_token)
             else:
                 result['friends'] = list()
 
         return json.dumps(result)
 
-    def _get_friends_fb(self, facebook_user_id, facebook_access_token):
+    def _get_friends_fb(self, user_id, facebook_user_id, facebook_access_token):
         logging.info('_get_friends_fb: Retrieve friends from facebook, facebook_user_id = {}'.format(facebook_user_id))
 
         friends = list()
@@ -83,10 +83,23 @@ class GetProfileSession(ProfileSessionBase):
                 for entry in data:
                     facebook_user_id = entry.get('id')
 
-                    profile = dict()
-                    profile['facebook_user_id'] = facebook_user_id
-                    profile['user_id'] = self._get_user_id_by_fb(facebook_user_id)
-                    profile['name'] = entry.get('name')
+                    info = self._get_user_by_fb(facebook_user_id)
+                    if info == None:
+                        continue
+
+                    profile = {
+                        'user_id': info.user_id,
+                        'facebook_user_id': info.facebook_user_id,
+                        'name': info.name,
+                        'username': info.username,
+                        'email': info.email
+                    }
+
+                    relation = self._engine.get_relations_many(user_id, [info.user_id])[0];
+                    if relation != None:
+                        profile['twilio_channel'] = relation.twilio_channel
+                    else:
+                        profile['twilio_channel'] = None
 
                     friends.append(profile)
 
@@ -103,22 +116,21 @@ class GetProfileSession(ProfileSessionBase):
         logging.info('_get_friends_fb: Got {} entries'.format(len(friends)))
         return friends
 
-    def _get_user_id_by_fb(self, facebook_user_id):
-        user_id = self._get_external_link(facebook_user_id)
+    def _get_user_by_fb(self, facebook_user_id):
+        user_id = self._engine.external_to_local_id(facebook_user_id)
         if user_id == None:
             logging.warning('Can\'t find user by facebook user id')
 
             info = UserInfo()
-            info.facebook_user_id = facebook_user_id
-
-            # Generate user id
             info.user_id = self._gen_user_id(info)
+            info.facebook_user_id = facebook_user_id
 
             # Create profile
             self._put_info(info.user_id, info)
             self._put_external_link(info.user_id, facebook_user_id)
-
-        return int(user_id)
+        else:
+            info = self._engine.get_info(user_id)
+        return info
 
 
 if __name__ == "__main__":
@@ -127,6 +139,6 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = GetProfileSession(global_context)
-    s.parse_query('{"user_id": 6823619285704494896}')
+    s.parse_query('{"user_id": 8618994807331250316, "properties": ["friends"]}')
     print s.execute()
 
