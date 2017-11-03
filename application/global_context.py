@@ -2,6 +2,7 @@ from aerospike_connector import AerospikeConnector
 from kafka_connector import KafkaConnector
 from searcher_connector import SearcherConnector
 from twilio_connector import TwilioConnector
+from s3connector import S3Connector
 import settings
 
 
@@ -12,6 +13,7 @@ class GlobalContext:
         self.kafka_connector = None
         self.searcher_connector = None
         self.twilio_connector = None
+        self.s3connector = None
 
     def initialize(self):
         self.aerospike_connector = AerospikeConnector(max_record_size=settings.AEROSPIKE_MAX_RECORD_SIZE, \
@@ -27,4 +29,5 @@ class GlobalContext:
 
         self.searcher_connector = SearcherConnector()
         self.twilio_connector = TwilioConnector()
+        self.s3connector = S3Connector()
 
