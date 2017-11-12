@@ -1,11 +1,12 @@
-from profile_session_base import UserInfo, ProfileQueryBase, ProfileSessionBase
+from query import Query, BadQuery
 from error import APILogicalError
+from users_engine import UsersEngine, UserInfo
 import json
 import logging
 import requests
 
 
-class GetProfileQuery(ProfileQueryBase):
+class GetProfileQuery(Query):
 
     def __init__(self):
         self.user_id = None
@@ -30,7 +31,10 @@ class GetProfileQuery(ProfileQueryBase):
         return properties
 
 
-class GetProfileSession(ProfileSessionBase):
+class GetProfileSession(object):
+
+    def __init__(self, global_context):
+        self._users_engine = UsersEngine(global_context)
 
     def parse_query(self, data):
         self._query = GetProfileQuery()
@@ -39,7 +43,7 @@ class GetProfileSession(ProfileSessionBase):
         logging.info('user_id = {}'.format(self._query.user_id))
 
     def execute(self):
-        info = self._engine.get_info(self._query.user_id)
+        info = self._users_engine.get_info(self._query.user_id)
         if info == None:
             raise APILogicalError('User not found')
 
@@ -53,10 +57,10 @@ class GetProfileSession(ProfileSessionBase):
         }
 
         if 'meta_blob' in self._query.properties:
-            result['meta_blob'] =  self._get_meta(self._query.user_id)
+            result['meta_blob'] =  self._users_engine.get_meta(self._query.user_id)
 
         if 'picture_blob' in self._query.properties:
-            result['picture_blob'] =  self._engine.get_picture(self._query.user_id)
+            result['picture_blob'] =  self._users_engine.get_picture(self._query.user_id)
 
         if 'friends' in self._query.properties:
             facebook_user_id = result['facebook_user_id']
@@ -95,7 +99,7 @@ class GetProfileSession(ProfileSessionBase):
                         'email': info.email
                     }
 
-                    relation = self._engine.get_relations_many(user_id, [info.user_id])[0];
+                    relation = self._users_engine.get_relations_many(user_id, [info.user_id])[0];
                     if relation != None:
                         profile['twilio_channel'] = relation.twilio_channel
                     else:
@@ -117,7 +121,7 @@ class GetProfileSession(ProfileSessionBase):
         return friends
 
     def _get_user_by_fb(self, facebook_user_id):
-        user_id = self._engine.external_to_local_id(facebook_user_id)
+        user_id = self._users_engine.external_to_local_id(facebook_user_id)
         if user_id == None:
             logging.warning('Can\'t find user by facebook user id')
 
@@ -126,10 +130,10 @@ class GetProfileSession(ProfileSessionBase):
             info.facebook_user_id = facebook_user_id
 
             # Create profile
-            self._put_info(info.user_id, info)
-            self._put_external_link(info.user_id, facebook_user_id)
+            self._users_engine.put_info(info.user_id, info)
+            self._users_engine.put_external_link(info.user_id, facebook_user_id)
         else:
-            info = self._engine.get_info(user_id)
+            info = self._users_engine.get_info(user_id)
         return info
 
 

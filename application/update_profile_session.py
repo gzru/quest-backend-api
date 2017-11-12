@@ -1,8 +1,10 @@
-from profile_session_base import ProfileQueryBase, ProfileSessionBase
+from query import Query
+from error import APILogicalError
+from users_engine import UsersEngine
 import json
 
 
-class UpdateProfileQuery(ProfileQueryBase):
+class UpdateProfileQuery(Query):
 
     def __init__(self):
         self.user_id = None
@@ -22,7 +24,10 @@ class UpdateProfileQuery(ProfileQueryBase):
         self.picture_blob = self._get_optional_blob(tree, 'picture_blob')
 
 
-class UpdateProfileSession(ProfileSessionBase):
+class UpdateProfileSession(object):
+
+    def __init__(self, global_context):
+        self._users_engine = UsersEngine(global_context)
 
     def parse_query(self, data):
         self._query = UpdateProfileQuery()
@@ -30,22 +35,22 @@ class UpdateProfileSession(ProfileSessionBase):
 
     def execute(self):
         user_id = self._query.user_id
-        user_info = self._engine.get_info(user_id)
+        user_info = self._users_engine.get_info(user_id)
         if user_info == None:
-            raise Exception('User not found')
+            raise APILogicalError('User not found')
 
         info_updated = False
         if self._query.name != None: user_info.name = self._query.name; info_updated = True
         if self._query.username != None: user_info.username = self._query.username; info_updated = True
         if self._query.email != None: user_info.email = self._query.email; info_updated = True
         if info_updated:
-            self._engine.put_info(user_info)
+            self._users_engine.put_info(user_info)
 
         if self._query.meta_blob:
-            self._put_meta(user_id, self._query)
+            self._users_engine.put_meta(user_id, self._query.meta_blob)
 
         if self._query.picture_blob != None:
-            self._engine.put_picture(user_id, self._query.picture_blob)
+            self._users_engine.put_picture(user_id, self._query.picture_blob)
 
         return json.dumps({'success': True, 'user_token': str(user_id)})
 

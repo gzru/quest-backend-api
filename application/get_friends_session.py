@@ -1,5 +1,5 @@
 from query import Query
-from profile_session_base import UserInfo, ProfileSessionBase
+from users_engine import UsersEngine
 import json
 import logging
 
@@ -28,15 +28,18 @@ class GetFriendsQuery(Query):
             self.cursor = ''
 
 
-class GetFriendsSession(ProfileSessionBase):
+class GetFriendsSession(object):
+
+    def __init__(self, global_context):
+        self._users_engine = UsersEngine(global_context)
 
     def parse_query(self, data):
         self._query = GetFriendsQuery()
         self._query.parse(data)
 
     def execute(self):
-        page = self._engine.get_friends(self._query.user_id, self._query.limit, self._query.cursor)
-        relations = self._engine.get_relations_many(self._query.user_id, page.data)
+        page = self._users_engine.get_friends(self._query.user_id, self._query.limit, self._query.cursor)
+        relations = self._users_engine.get_relations_many(self._query.user_id, page.data)
 
         friends = list()
         # Retrieve aux data
@@ -44,21 +47,24 @@ class GetFriendsSession(ProfileSessionBase):
             if relations[i] == None or not relations[i].is_friends:
                 continue
 
-            profile = dict()
             # fix me, use group request
             info = None
             try:
-                info = self._get_info(user_id)
+                info = self._users_engine.get_info(user_id)
             except:
                 pass
             if info == None:
                 logging.warning('Can\'t find user profile, id = {}'.format(user_id))
                 continue
 
-            profile['user_id'] = user_id
-            profile['name'] = info.get('name')
-            profile['twilio_channel'] = relations[i].twilio_channel
-
+            profile = {
+                'user_id': info.user_id,
+                'facebook_user_id': info.facebook_user_id,
+                'name': info.name,
+                'username': info.username,
+                'email': info.email,
+                'twilio_channel': relations[i].twilio_channel
+            }
             friends.append(profile)
 
         result = {
@@ -68,16 +74,13 @@ class GetFriendsSession(ProfileSessionBase):
         }
         return json.dumps(result)
 
-"""
-from global_context import GlobalContext
-global_context = GlobalContext()
-global_context.initialize()
 
-s = GetFriendsSession(global_context)
-s.parse_query('{ "user_id": 123, "limit": 1 }')
-print s.execute()
+if __name__ == "__main__":
+    from global_context import GlobalContext
+    global_context = GlobalContext()
+    global_context.initialize()
 
-s.parse_query('{ "user_id": 123, "limit": 2, "cursor": "eyJiIjogMCwgIm8iOiAxfQ==" }')
-print s.execute()
-"""
+    s = GetFriendsSession(global_context)
+    s.parse_query('{"user_token": "8618994807331250316", "user_id": 8618994807331250316, "properties": ["friends"]}')
+    print s.execute()
 

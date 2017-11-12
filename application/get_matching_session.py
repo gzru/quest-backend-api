@@ -94,7 +94,7 @@ class GetMatchingSession(object):
             }
             return result
         except Exception as ex:
-            logging.error(ex)
+            logging.error('{}\n{}'.format(ex, resp.text[:100]))
             raise APIInternalServicesError('matching/get request failed, bad response')
 
     def _send_requests(self, requests_gen):

@@ -1,5 +1,5 @@
 from query import Query
-from profile_session_base import UserInfo, ProfileSessionBase
+from users_engine import UsersEngine
 from error import APILogicalError
 import json
 import requests
@@ -30,14 +30,17 @@ class GetExternalFriendsQuery(Query):
             self.cursor = ''
 
 
-class GetExternalFriendsSession(ProfileSessionBase):
+class GetExternalFriendsSession(object):
+
+    def __init__(self, global_context):
+        self._users_engine = UsersEngine(global_context)
 
     def parse_query(self, data):
         self._query = GetExternalFriendsQuery()
         self._query.parse(data)
 
     def execute(self):
-        info = self._engine.get_info(self._query.user_id)
+        info = self._users_engine.get_info(self._query.user_id)
         if info == None:
             raise APILogicalError('User {} not found'.format(self._query.user_id))
 
@@ -82,14 +85,14 @@ class GetExternalFriendsSession(ProfileSessionBase):
                 profiles.append(profile)
                 external_ids.append(entry.get('id'))
 
-            local_ids = self._engine.external_to_local_id_many(external_ids)
+            local_ids = self._users_engine.external_to_local_id_many(external_ids)
             for i in range(len(local_ids) - 1, -1, -1):
                 if local_ids[i] == None:
                     del local_ids[i]
                     del profiles[i]
                 profiles[i]['user_id'] = local_ids[i]
 
-            check_result = self._engine.check_friends_many(self._query.user_id, local_ids)
+            check_result = self._users_engine.check_friends_many(self._query.user_id, local_ids)
             for i in range(len(check_result)):
                 if not check_result[i]:
                     friends.append(profiles[i])
