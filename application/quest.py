@@ -22,8 +22,8 @@ from remove_sign_view_session import RemoveSignViewSession
 from get_user_likes_session import GetUserLikesSession
 from get_user_views_session import GetUserViewsSession
 from make_sign_public_link import MakeSignPublicLinkSession
+from get_sign_public_link_content_session import GetSignPublicLinkContentSession
 
-from create_profile_session import CreateProfileSession
 from update_profile_session import UpdateProfileSession
 from find_profile_session import FindProfileSession
 from search_profile_session import SearchProfileSession
@@ -62,6 +62,7 @@ def run_session(data, session_type):
             response.data = json.dumps({'success': False, 'error': {'message': ex.message, 'code': ex.code}})
             return response
         except Exception as ex:
+            logging.error('unknown query error: {}'.format(ex))
             response.status_code = 400
             response.data = json.dumps({'success': False, 'error': {'message': str(ex), 'code': 1}})
             return response
@@ -72,6 +73,7 @@ def run_session(data, session_type):
         response.data = json.dumps({'success': False, 'error': {'message': ex.message, 'code': ex.code}})
         return response
     except Exception as ex:
+        logging.error('unknown execution error: {}'.format(ex))
         response.status_code = 500
         response.data = json.dumps({'success': False, 'error': {'message': str(ex), 'code': 1}})
         return response
@@ -141,7 +143,7 @@ def remove_sign_view():
     return run_session(request.get_data(), RemoveSignViewSession)
 
 @application.route('/api/sign/publiclink', methods=['POST'])
-def make_sign_public_link_view():
+def make_sign_public_link():
     return run_session(request.get_data(), MakeSignPublicLinkSession)
 
 @application.route('/api/profile/likes/get', methods=['POST'])
@@ -151,10 +153,6 @@ def get_user_likes():
 @application.route('/api/profile/views/get', methods=['POST'])
 def get_user_views():
     return run_session(request.get_data(), GetUserViewsSession)
-
-@application.route('/api/profile/create', methods=['POST'])
-def create_profile():
-    return run_session(request.get_data(), CreateProfileSession)
 
 @application.route('/api/profile/update', methods=['POST'])
 def update_profile():
@@ -212,12 +210,10 @@ def email_auth_stage1():
 def email_auth_stage2():
     return run_session(request.get_data(), EMailAuthStage2Session)
 
-@application.route("/", methods=['POST', 'GET'])
-def hello():
-    response = jsonify()
-    response.status_code = 200
-    response.data = "{ omg }"
-    return response
+@application.route('/content/sign/<int:sign_id>/publiclink', methods=['GET'])
+def get_sign_public_link_content(sign_id):
+    return run_session(sign_id, GetSignPublicLinkContentSession)
+
 
 if __name__ == '__main__':
     application.run(debug=True, host="0.0.0.0", port=8080)
