@@ -1,5 +1,5 @@
-from query import Query, BadQuery
-from profile_session_base import UserInfo, ProfileSessionBase
+from query import Query
+from users_engine import UsersEngine, UserInfo
 import json
 import requests
 import logging
@@ -20,10 +20,11 @@ class FacebookAuthQuery(Query):
         logging.info('facebook_user_id: {}'.format(self.facebook_user_id))
 
 
-class FacebookAuthSession(ProfileSessionBase):
+class FacebookAuthSession(object):
 
     def __init__(self, global_context):
-        super(FacebookAuthSession, self).__init__(global_context)
+        self._users_engine = UsersEngine(global_context)
+        self._avatar_generator = global_context.avatar_generator
         self._facebook_profile_uri = 'https://graph.facebook.com/me'
         self._timeout_sec = 1
 
@@ -32,36 +33,57 @@ class FacebookAuthSession(ProfileSessionBase):
         self._query.parse(data)
 
     def execute(self):
-        url = '{}?access_token={}'.format(self._facebook_profile_uri, self._query.access_token)
-        try:
-            resp = requests.get(url, timeout=self._timeout_sec)
-        except Exception as ex:
-            logging.error(ex)
-            raise Exception('Request to facebook failed')
-
-        facebook_prof = json.loads(resp.text)
+        facebook_prof = self._get_facebook_profile(self._query.access_token)
         facebook_user_id = facebook_prof['id']
+        facebook_name = facebook_prof.get('name')
 
         # Check fb user id
         if self._query.facebook_user_id != facebook_user_id:
             raise Exception('facebook_user_id mismatch')
 
         # Check user exists
-        user_id = self._get_external_link(facebook_user_id)
-        if not user_id:
-            info = UserInfo()
-            info.facebook_user_id = facebook_user_id
-            info.facebook_access_token = self._query.access_token
-            info.name = facebook_prof['name']
+        user_id = self._users_engine.external_to_local_id(facebook_user_id)
+        if user_id == None:
+            user_id = self._create_new_user(facebook_name, facebook_user_id, self._query.access_token)
 
-            # Generate user id
-            user_id = self._gen_user_id(info)
+        result = {
+            'success': True,
+            'user_token': str(user_id),
+            'user_id': int(user_id)
+        }
+        return json.dumps(result)
 
-            # Create profile
-            self._put_info(user_id, info)
-            self._put_external_link(user_id, facebook_user_id)
+    def _get_facebook_profile(self, access_token):
+        url = '{}?access_token={}'.format(self._facebook_profile_uri, access_token)
+        try:
+            resp = requests.get(url, timeout=self._timeout_sec)
+        except Exception as ex:
+            logging.error(ex)
+            raise Exception('Request to facebook failed')
 
-        return json.dumps({ 'success': True, 'user_token': str(user_id), 'user_id': int(user_id) })
+        profile = json.loads(resp.text)
+        if 'id' not in profile:
+            logging.error('Facebook bad response: {}'.format(profile))
+            raise Exception('Request to facebook failed. Bad response.')
+        return profile
+
+    def _create_new_user(self, name, facebook_user_id, facebook_access_token):
+        info = UserInfo()
+        info.facebook_user_id = facebook_user_id
+        info.facebook_access_token = facebook_access_token
+        info.name = name
+
+        # Generate user id
+        info.user_id = self._users_engine.gen_user_id(info)
+
+        # Create profile
+        self._users_engine.put_info(info)
+        self._users_engine.put_external_link(info.user_id, facebook_user_id)
+
+        picture = self._avatar_generator.generate(name)
+        self._users_engine.put_picture(info.user_id, picture)
+
+        return info.user_id
 
 """
 from requests_oauthlib import OAuth2Session

@@ -3,6 +3,7 @@ from kafka_connector import KafkaConnector
 from searcher_connector import SearcherConnector
 from twilio_connector import TwilioConnector
 from s3connector import S3Connector
+from avatar_generator import AvatarGenerator
 import settings
 
 
@@ -26,6 +27,8 @@ class GlobalContext:
                                               send_message_timeout_sec=settings.KAFKA_SEND_MESSAGE_TIMEOUT_SEC)
         if not self.kafka_connector.connect(settings.KAFKA_HOSTS):
             raise Exception('Can\'t connect to kafka')
+
+        self.avatar_generator = AvatarGenerator('data/avatar_palette.png', 'data/SanFranciscoDisplay-Regular.ttf')
 
         self.searcher_connector = SearcherConnector()
         self.twilio_connector = TwilioConnector()
