@@ -83,6 +83,9 @@ class AvatarGenerator(object):
         """
             Returns the text to draw.
         """
+        if string == None:
+            return random.choice(AvatarGenerator.EMOT_ICONS)
+
         text = ''
         tokens = self._tokens_regex.findall(string)
         if len(tokens):
@@ -99,10 +102,11 @@ class AvatarGenerator(object):
         width, height = self._font.getsize(text)
         left = (size - width) / 2.0
         # I just don't know why 3 :)
-        top = (size - height) / 3.0
+        top = (size - height) / 2.0
         return left, top
 
-generator = AvatarGenerator('data/ava_pallete.png', 'data/System San Francisco Display Regular.ttf')
-avatar = generator.generate(u'sona blade')
-open('test.png', 'wb').write(avatar)
+
+if __name__ == "__main__":
+    generator = AvatarGenerator('data/avatar_palette.png', 'data/SanFranciscoDisplay-Regular.ttf')
+    avatar = generator.generate(u'sona blade')
 
