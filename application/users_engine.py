@@ -112,6 +112,7 @@ class UsersEngine(object):
         self._s3connector = global_context.s3connector
         self._namespace = 'test'
         self._info_set = 'user_info'
+        self._meta_set = 'user_meta'
         self._picture_set = 'user_picture'
         self._friends_set = 'user_friends'
         self._signs_set = 'user_signs'
@@ -157,6 +158,17 @@ class UsersEngine(object):
         pic_key = (self._namespace, self._picture_set, str(user_id))
         data = self._aerospike_connector.get_data(pic_key)
         if data == None:
+            return None
+        return base64.b64encode(data)
+
+    def put_meta(self, user_id, meta):
+        meta_key = (self._namespace, self._meta_set, str(user_id))
+        self._aerospike_connector.put_data(meta_key, meta)
+
+    def get_meta(self, user_id):
+        meta_key = (self._namespace, self._meta_set, str(user_id))
+        data = self._aerospike_connector.get_data(meta_key)
+        if not data:
             return None
         return base64.b64encode(data)
 
