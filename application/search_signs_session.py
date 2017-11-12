@@ -1,11 +1,13 @@
 from query import Query, BadQuery
 from signs_engine import SignsEngine
+from error import APIUserTokenError
 import json
 
 
 class SearchSignsQuery(Query):
 
     def __init__(self):
+        self.user_token = None
         self.user_id = None
         self.latitude = None
         self.longitude = None
@@ -17,8 +19,14 @@ class SearchSignsQuery(Query):
         self.features = None
 
     def parse(self, data):
+        print data
         tree = self._parse_json(data)
-        self.user_id = int(self._get_required_str(tree, 'user_token'))
+        self.user_token = self._get_required_str(tree, 'user_token')
+        # TODO
+        try:
+            self.user_id = int(self.user_token)
+        except:
+            raise APIUserTokenError('Bad token')
         self.latitude = self._get_required_float64(tree, 'latitude')
         self.longitude = self._get_required_float64(tree, 'longitude')
         self.radius = self._get_required_float64(tree, 'radius')
@@ -82,7 +90,7 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = SearchSignsSession(global_context)
-    s.parse_query('{"latitude":54.713336944580078,"features":[],"debug":false,"radius":100.67225646972656,"min_rank":0.80000001192092896,"longitude":20.538284301757812,"user_token":"570414123406147177"}')
+    s.parse_query('{"latitude":54.713336944580078,"features":[],"debug":false,"radius":100.67225646972656,"min_rank":0.80000001192092896,"longitude":20.538284301757812,"user_token":""}')
     print s.execute()
 
 

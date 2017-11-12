@@ -6,6 +6,12 @@ class APIError(Exception):
         self.code = code
 
 
+class APIUserTokenError(APIError):
+
+    def __init__(self, message):
+        super(APIUserTokenError, self).__init__(message, 3)
+
+
 class APIInconsistentAuthCodeError(APIError):
 
     def __init__(self, message):
