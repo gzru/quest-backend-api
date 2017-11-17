@@ -81,11 +81,11 @@ class AerospikeConnector:
     def put_bins(self, key, bins, ttl=0):
         self._put_one(key, bins, ttl)
 
-    def get_bins(self, key):
-        return self._get_one(key)
+    def get_bins(self, key, bins=None):
+        return self._get_one(key, bins)
 
-    def get_bins_many(self, keys):
-        return self._get_many(keys)
+    def get_bins_many(self, keys, bins=None):
+        return self._get_many(keys, bins)
 
     def increment(self, key, bin, value=1):
         try:
@@ -197,22 +197,28 @@ class AerospikeConnector:
     def _chunk_subkey(self, key, n):
         return (key[0], key[1], '{}_{}'.format(key[2], n))
 
-    def _get_one(self, key):
+    def _get_one(self, key, bins=None):
         try:
-            (_, _, bins) = self._client.get(key, policy=self._read_policy)
+            if bins == None:
+                record = self._client.get(key, policy=self._read_policy)
+            else:
+                record = self._client.select(key, bins, policy=self._read_policy)
         except aerospike.exception.RecordNotFound:
             return None
         except Exception as ex:
             logging.error('Database error: {}'.format(ex))
             raise APIInternalServicesError('Database error: {}'.format(ex))
-        return bins
+        return record[2]
 
-    def _get_many(self, keys):
+    def _get_many(self, keys, bins=None):
         result = list()
         try:
-            response = self._client.get_many(keys, policy=self._read_policy)
-            for entry in response:
-                result.append(entry[2])
+            if bins == None:
+                response = self._client.get_many(keys, policy=self._read_policy)
+            else:
+                response = self._client.select_many(keys, bins, policy=self._read_policy)
+            for record in response:
+                result.append(record[2])
         except Exception as ex:
             logging.error('Database error: {}'.format(ex))
             raise APIInternalServicesError('Database error: {}'.format(ex))
