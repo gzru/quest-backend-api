@@ -42,7 +42,7 @@ class FacebookAuthSession(object):
             raise Exception('facebook_user_id mismatch')
 
         # Check user exists
-        user_id = self._users_engine.external_to_local_id(facebook_user_id)
+        user_id = self._find_user(facebook_user_id)
         if user_id == None:
             user_id = self._create_new_user(facebook_name, facebook_user_id, self._query.access_token)
 
@@ -66,6 +66,16 @@ class FacebookAuthSession(object):
             logging.error('Facebook bad response: {}'.format(profile))
             raise Exception('Request to facebook failed. Bad response.')
         return profile
+
+    def _find_user(self, facebook_user_id):
+        user_id = self._users_engine.external_to_local_id(facebook_user_id)
+        if user_id == None:
+            return None
+        try:
+            info = self._users_engine.get_info(user_id)
+            return info.user_id
+        except:
+            return None
 
     def _create_new_user(self, name, facebook_user_id, facebook_access_token):
         info = UserInfo()
