@@ -210,7 +210,7 @@ def email_auth_stage1():
 def email_auth_stage2():
     return run_session(request.get_data(), EMailAuthStage2Session)
 
-@application.route('/content/sign/<int:sign_id>/publiclink', methods=['GET'])
+@application.route('/app/pathtosign/id/<int:sign_id>', methods=['GET'])
 def get_sign_public_link_content(sign_id):
     return run_session(sign_id, GetSignPublicLinkContentSession)
 
