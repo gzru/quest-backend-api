@@ -24,6 +24,10 @@ class AerospikeConnector:
             'hosts': hosts,
             'policies': {
                 'timeout': self._connection_timeout_ms
+            },
+            'lua': {
+                'system_path': '/usr/local/aerospike/lua',
+                'user_path': '/home/app/quest-backend-api/scripts/'
             }
         }
 
