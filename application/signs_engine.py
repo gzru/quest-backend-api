@@ -1,5 +1,7 @@
 from error import APILogicalError, APIInternalServicesError
 from searcher_connector import SearcherMapClustersQParams
+from search_index import SearchIndex
+from searcher import Searcher, SearchParams
 import hashlib
 import requests
 import logging
@@ -73,6 +75,7 @@ class SignsEngine(object):
         self._kafka_connector = global_context.kafka_connector
         self._searcher_connector = global_context.searcher_connector
         self._s3connector = global_context.s3connector
+        self._search_index = SearchIndex(global_context.aerospike_connector)
         self._namespace = 'test'
         self._info_set = 'sign_info'
         self._features_set = 'sign_features'
@@ -93,7 +96,7 @@ class SignsEngine(object):
         # Check
         self._check_duplicate(info.sign_id)
         # Put data and then info
-        self._put_features(info.sign_id, features)
+        self._search_index.add_sign(info, features)
         if meta_blob != None:
             self._put_meta(info.sign_id, meta_blob)
         if object_blob != None:
@@ -115,6 +118,7 @@ class SignsEngine(object):
         self._aerospike_connector.remove((self._namespace, self._object_set, str(sign_id)))
         self._aerospike_connector.remove((self._namespace, self._meta_set, str(sign_id)))
         self._aerospike_connector.remove((self._namespace, self._features_set, str(sign_id)))
+        self._search_index.remove_sign(sign_id)
 
     def check_privacy_many(self, sign_ids):
         keys = list()
@@ -136,6 +140,7 @@ class SignsEngine(object):
             'is_private': int(is_private)
         }
         self._aerospike_connector.put_bins((self._namespace, self._info_set, str(sign_id)), update)
+        self._search_index.set_sign_privacy(sign_id, is_private)
 
     def grant_sign_access(self, user_id, sign_id):
         key = '{}:{}'.format(user_id, sign_id)
@@ -143,6 +148,7 @@ class SignsEngine(object):
             'data': '{}'
         }
         self._aerospike_connector.put_bins((self._namespace, self._access_set, key), data)
+        self._search_index.add_private_access(user_id, sign_id)
 
     def _gen_sign_id(self, info, object_blob):
         hasher = hashlib.md5()
@@ -397,8 +403,19 @@ if __name__ == "__main__":
     global_context = GlobalContext()
     global_context.initialize()
 
+    info = SignInfo()
+    info.sign_id = 123
+    info.user_id = 123
+    info.latitude = 1
+    info.longitude = 2
+    info.radius = 100
+    info.time_to_live = 0
+    info.timestamp = 0
+
+    features = [1, 2, 3]
+
     se = SignsEngine(global_context)
-    #se.add_sign_like(123, 5435010004366254830)
+    se.put_sign(info, features, None, None, None, None)
     #se.remove_sign_like(123, 5435010004366254830)
     #print se.check_likes(5435010004366254830, [345, 567])
     #print se.get_info(5435010004366254830).likes_count
