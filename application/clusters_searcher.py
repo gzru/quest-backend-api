@@ -92,7 +92,7 @@ class ClastersSearcher(object):
 
     def _records_processor(self, params, builder):
         def _impl(record):
-            sign_id = record['sign_id']
+            sign_id = int(record['sign_id'])
             location = record['location'].unwrap().get('coordinates')
             builder.put_sign(sign_id, location[0], location[1])
         return _impl

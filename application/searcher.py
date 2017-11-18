@@ -1,6 +1,7 @@
 from search_index import SearchIndex
 import geo
 import heapq
+import logging
 
 
 class SearchEntry(object):
@@ -62,7 +63,7 @@ class Searcher(object):
         self._search_index = SearchIndex(aerospike_connector)
 
     def search(self, params):
-        if params.features == None:
+        if params.features == None or len(params.features) == 0:
             signs = self._search_nearest(params)
         else:
             signs = self._search_by_fea(params)
@@ -72,12 +73,15 @@ class Searcher(object):
     def _records_processor(self, params, heap):
         def _impl(record):
             entry = SearchEntry()
-            entry.sign_id = record['sign_id']
-            entry.rank = record.get('rank')
+            entry.sign_id = int(record['sign_id'])
+            entry.rank = record.get('rank', 0)
+            if entry.rank < params.min_rank:
+                return
+
             location = record['location'].unwrap().get('coordinates')
             entry.distance = geo.distance(params.latitude, params.longitude, location[0], location[1])
             heap.push(entry)
-        return impl
+        return _impl
 
     def _search_nearest(self, params):
         heap = SearchResultsHeap(params.max_n, lambda entry: -entry.distance)
@@ -117,10 +121,8 @@ class Searcher(object):
                 'sign_id': sign.sign_id,
                 'distance': sign.distance
             })
-        result = {
-            'signs': signs_list
-        }
 
+        debug = None
         if params.debug:
             weights = list()
             for sign in signs:
@@ -131,8 +133,7 @@ class Searcher(object):
             debug = {
                 'weights': weights
             }
-            result['debug'] = debug
-        return result
+        return signs_list, debug
 
 
 if __name__ == "__main__":
