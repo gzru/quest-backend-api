@@ -52,12 +52,15 @@ global_context = GlobalContext()
 global_context.initialize()
 
 def run_session(data, session_type):
+    logging.info('query: %s', data[:256])
+
     response = jsonify()
     try:
         session = session_type(global_context)
         try:
             session.parse_query(data)
         except APIError as ex:
+            logging.error('code: {}, message: {}'.format(ex.code, ex.message))
             response.status_code = 400
             response.data = json.dumps({'success': False, 'error': {'message': ex.message, 'code': ex.code}})
             return response
@@ -69,6 +72,7 @@ def run_session(data, session_type):
 
         result = session.execute()
     except APIError as ex:
+        logging.error('code: {}, message: {}'.format(ex.code, ex.message))
         response.status_code = 500
         response.data = json.dumps({'success': False, 'error': {'message': ex.message, 'code': ex.code}})
         return response
