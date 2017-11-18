@@ -1,7 +1,8 @@
 from query import Query, BadQuery
-from signs_engine import SignsEngine
 from error import APIUserTokenError
+from searcher import Searcher, SearchParams
 import json
+import logging
 
 
 class SearchSignsQuery(Query):
@@ -19,7 +20,6 @@ class SearchSignsQuery(Query):
         self.features = None
 
     def parse(self, data):
-        print data
         tree = self._parse_json(data)
         self.user_token = self._get_required_str(tree, 'user_token')
         # TODO
@@ -59,22 +59,29 @@ class SearchSignsQuery(Query):
 class SearchSignsSession(object):
 
     def __init__(self, global_context):
-        self._signs_engine = SignsEngine(global_context)
+        self._aerospike_connector = global_context.aerospike_connector
 
     def parse_query(self, data):
         self._query = SearchSignsQuery()
         self._query.parse(data)
 
     def execute(self):
-        found, debug = self._signs_engine.search_signs(self._query.user_id, \
-                                            self._query.latitude, \
-                                            self._query.longitude, \
-                                            self._query.radius, \
-                                            self._query.max_n, \
-                                            self._query.min_rank, \
-                                            self._query.sort_by, \
-                                            self._query.debug, \
-                                            self._query.features)
+        params = SearchParams()
+        params.user_id = self._query.user_id
+        params.max_n = self._query.max_n
+        params.latitude = self._query.latitude
+        params.longitude = self._query.longitude
+        params.radius = self._query.radius
+        params.min_rank = self._query.min_rank
+        params.debug = self._query.debug
+        params.features = self._query.features
+        if self._query.sort_by == 'distance':
+            params.sort_by = SearchParams.SORT_BY_DISTANCE
+        elif self._query.sort_by == 'rank':
+            params.sort_by = SearchParams.SORT_BY_RANK
+
+        searcher = Searcher(self._aerospike_connector)
+        found, debug = searcher.search(params)
 
         result = {
             'success': True,
@@ -90,7 +97,8 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = SearchSignsSession(global_context)
-    s.parse_query('{"latitude":54.713336944580078,"features":[],"debug":false,"radius":100.67225646972656,"min_rank":0.80000001192092896,"longitude":20.538284301757812,"user_token":""}')
+    #s.parse_query('{"latitude":54.713336944580078,"features":[],"debug":true,"radius":100.67225646972656,"min_rank":0.80000001192092896,"longitude":20.538284301757812,"user_token":"123"}')
+    s.parse_query('{"latitude": -35.6709, "longitude": -9.6504, "user_token": "2414917961944660396", "radius": 1000}')
     print s.execute()
 
 
