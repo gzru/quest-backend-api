@@ -3,13 +3,13 @@ import aerospike
 
 AEROSPIKE_CONFIG = {
     'hosts': [
-        ('localhost', 3000)
+        ('165.227.86.99', 3000)
     ]
 }
 
 NAMESPACE = 'test'
-SEARCH_INDEX_GLOBAL_SET = 'global_search_index'
-SEARCH_INDEX_PRIVATE_SET = 'private_search_index'
+SEARCH_INDEX_GLOBAL_SET = 'search_index_global'
+SEARCH_INDEX_PRIVATE_SET = 'search_index_private'
 SEARCH_INDEX_GEO_BIN = 'location'
 
 
