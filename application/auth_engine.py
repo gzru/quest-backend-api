@@ -1,11 +1,11 @@
 from cipher import AESCipher
 from error import APIInconsistentAuthCodeError, APIInternalServicesError, APILogicalError
-from flask import render_template
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 import random
 import json
+import jinja2
 import logging
 
 
@@ -67,7 +67,7 @@ class AuthEngine(object):
         try:
             msg = MIMEMultipart('alternative')
             msg['Subject'] = "Subject: Quest authentication"
-            msg.attach(MIMEText(render_template('email-inlined.html', HREF=(self._confirm_deep_link + str(auth_code)), PIN=auth_code), 'html'))
+            msg.attach(MIMEText(self._get_message_body(auth_code), 'html'))
 
             server = smtplib.SMTP('smtp.gmail.com')
             server.ehlo()
@@ -78,6 +78,19 @@ class AuthEngine(object):
         except Exception as ex:
             logging.error(ex)
             raise APIInternalServicesError('Can\'t send email with auth code to {}'.format(user_email))
+
+    def _get_message_body(self, auth_code):
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader('templates/')
+        )
+
+        context = {
+            'HREF': 'https://quest.aiarlabs.com/app/login/' + str(auth_code),
+            'PIN': auth_code
+        }
+
+        template = env.get_template('email-inlined.html')
+        return template.render(context)
 
 
 if __name__ == '__main__':
