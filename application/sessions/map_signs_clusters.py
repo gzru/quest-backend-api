@@ -44,11 +44,18 @@ class MapSignsClustersSession(POSTSession):
 
         clusters_result = list()
         for cluster in clusters:
+            signs = list()
+            for sign_id in cluster.signs:
+                sign = {
+                    'sign_id': sign_id
+                }
+                signs.append(sign)
+
             entry = {
                 'latitude': cluster.latitude,
                 'longitude': cluster.longitude,
                 'total_size': cluster.size,
-                'signs': list(cluster.signs)
+                'signs': list(signs)
             }
             clusters_result.append(entry)
 
