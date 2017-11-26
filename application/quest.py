@@ -52,7 +52,7 @@ global_context = GlobalContext()
 global_context.initialize()
 
 def run_session(data, session_type):
-    logging.info('query: %s', data[:256])
+    #logging.info('query: %s', data[:256])
 
     response = jsonify()
     try:

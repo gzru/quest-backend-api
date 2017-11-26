@@ -80,8 +80,12 @@ class ClastersSearcher(object):
         gridsize_lat = params.span_latitude * 2 / params.screen_height * params.grid_size
         gridsize_lon = params.span_longitude * 2 / params.screen_width * params.grid_size
 
+        n_signs = params.signs_sample_size
+        if n_signs == None:
+            n_signs = 100
+
         # Builder to accumulate and group signs
-        builder = ClustersBuilder(gridsize_lat, gridsize_lon, 100, params.signs_sample_size)
+        builder = ClustersBuilder(gridsize_lat, gridsize_lon, 100, n_signs)
 
         # Retrieve and process signs
         self._search_index.search_region(params.user_id, \
@@ -94,7 +98,7 @@ class ClastersSearcher(object):
         def _impl(record):
             sign_id = int(record['sign_id'])
             location = record['location'].unwrap().get('coordinates')
-            builder.put_sign(sign_id, location[0], location[1])
+            builder.put_sign(sign_id, location[1], location[0])
         return _impl
 
 
