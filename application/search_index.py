@@ -1,6 +1,7 @@
 from error import APILogicalError
 import aerospike
 import logging
+import math
 
 
 class Entry(object):
@@ -29,6 +30,13 @@ class SearchIndex(object):
                 'coordinates': [info.longitude, info.latitude]
             }
         )
+        # Normailize features vector
+        qsum = 0
+        for fea in features:
+            qsum = qsum + fea * fea
+        qsum = math.sqrt(qsum)
+        for i in range(len(features)):
+            features[i] = features[i] / qsum
         # aerospike udf cant handle int64
         # so use strings instead
         # TODO try to split int64 into pair of int32 bins
@@ -131,7 +139,7 @@ if __name__ == "__main__":
     import aerospike_connector
 
     connector = aerospike_connector.AerospikeConnector(128000, 10, 100)
-    connector.connect(['localhost'])
+    connector.connect(['165.227.86.99'])
 
     si = SearchIndex(connector)
 
@@ -141,7 +149,7 @@ if __name__ == "__main__":
     e1.latitude = 1
     e1.longitude = 1
     e1.features = [1, 2, 3]
-    si.add_sign(e1)
+    si.add_sign(e1, e1.features)
 
     e2 = Entry()
     e2.user_id = 10002
@@ -150,7 +158,7 @@ if __name__ == "__main__":
     e2.longitude = 1
     e2.features = [3, 2, 1]
     e2.is_private = False
-    si.add_sign(e2)
+    si.add_sign(e2, e2.features)
 
     e3 = Entry()
     e3.user_id = 10002
@@ -158,7 +166,7 @@ if __name__ == "__main__":
     e3.latitude = 1
     e3.longitude = 1
     e3.features = [1, 4, 9]
-    si.add_sign(e3)
+    si.add_sign(e3, e3.features)
     si.add_private_access(10001, 20003)
 
     def format(entry):

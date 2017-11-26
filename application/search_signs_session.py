@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     s = SearchSignsSession(global_context)
     #s.parse_query('{"latitude":54.713336944580078,"features":[],"debug":true,"radius":100.67225646972656,"min_rank":0.80000001192092896,"longitude":20.538284301757812,"user_token":"123"}')
-    s.parse_query('{"latitude": -35.6709, "longitude": -9.6504, "user_token": "2414917961944660396", "radius": 1000}')
+    s.parse_query('{"debug": true, "radius": 100, "min_rank": 0.800000011920929, "longitude": 20.15097999572754, "user_token": "6914063709439103963", "latitude": 54.92617034912109}')
     print s.execute()
 
 

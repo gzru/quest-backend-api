@@ -2,6 +2,7 @@ from search_index import SearchIndex
 import geo
 import heapq
 import logging
+import math
 
 
 class SearchEntry(object):
@@ -74,12 +75,16 @@ class Searcher(object):
         def _impl(record):
             entry = SearchEntry()
             entry.sign_id = int(record['sign_id'])
-            entry.rank = record.get('rank', 0)
-            if entry.rank < params.min_rank:
+            entry.rank = record.get('rank')
+            # Min rank threshold
+            if entry.rank != None and entry.rank < params.min_rank:
                 return
+            # Legacy
+            if entry.rank == None:
+                entry.rank = 0
 
             location = record['location'].unwrap().get('coordinates')
-            entry.distance = geo.distance(params.latitude, params.longitude, location[0], location[1])
+            entry.distance = geo.distance(params.latitude, params.longitude, location[1], location[0])
             heap.push(entry)
         return _impl
 
@@ -98,6 +103,13 @@ class Searcher(object):
 
     def _search_by_fea(self, params):
         heap = SearchResultsHeap(params.max_n, lambda entry: entry.rank)
+        # Normailize features vector
+        qsum = 0
+        for fea in params.features:
+            qsum = qsum + fea * fea
+        qsum = math.sqrt(qsum)
+        for i in range(len(params.features)):
+            params.features[i] = params.features[i] / qsum
         # Retrieve records
         self._search_index.search_by_fea(params.user_id, \
                                          params.latitude, \

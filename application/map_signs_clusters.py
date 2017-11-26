@@ -50,11 +50,18 @@ class MapSignsClustersSession(object):
 
         clusters_result = list()
         for cluster in clusters:
+            signs = list()
+            for sign_id in cluster.signs:
+                sign = {
+                    'sign_id': sign_id
+                }
+                signs.append(sign)
+
             entry = {
                 'latitude': cluster.latitude,
                 'longitude': cluster.longitude,
                 'total_size': cluster.size,
-                'signs': list(cluster.signs)
+                'signs': list(signs)
             }
             clusters_result.append(entry)
 
@@ -74,6 +81,7 @@ if __name__ == "__main__":
 
     s = MapSignsClustersSession(global_context)
     #s.parse_query('{"user_token": "333391931385052725", "map_view":{"center": {"latitude":55, "longitude":35}, "span": {"latitude": 5, "longitude": 5}}, "grid_size": 100, "screen": {"width":375, "height": 667}, "signs_sample_size": 2}')
-    s.parse_query('{"screen":{"width":750,"height":1334},"user_token":"333391931385052725","map_view":{"center":{"longitude":37.930229187011719,"latitude":55.793952941894531},"span":{"longitude":0.0012035096297040582,"latitude":0.0012035096297040582}},"grid_size":75}')
+    #s.parse_query('{"screen":{"height": 1334, "width": 750}, "map_view":{"center":{"latitude": 54.92512512207031, "longitude": 20.15011787414551}, "span":{"latitude": 0.0055807535536587238, "longitude": 0.0055807535536587238}}, "user_token": "6914063709439103963", "grid_size": 75}')
+    s.parse_query('{"screen": {"width": 750,"height": 1334},"user_token": "6914063709439103963","map_view": {"center": {"longitude": 4.8072772026062012,"latitude": 52.359981536865234},"span": {"longitude": 0.0024630629923194647,"latitude": 0.0024630629923194647}},"grid_size": 75}')
     print s.execute()
 
