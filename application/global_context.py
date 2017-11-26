@@ -23,10 +23,10 @@ class GlobalContext:
         if not self.aerospike_connector.connect(settings.AEROSPIKE_HOSTS):
             raise Exception('Can\'t connect to aerospike')
 
-        self.kafka_connector = KafkaConnector(request_timeout_ms=settings.KAFKA_REQUEST_TIMEOUT_MS, \
-                                              send_message_timeout_sec=settings.KAFKA_SEND_MESSAGE_TIMEOUT_SEC)
-        if not self.kafka_connector.connect(settings.KAFKA_HOSTS):
-            raise Exception('Can\'t connect to kafka')
+        #self.kafka_connector = KafkaConnector(request_timeout_ms=settings.KAFKA_REQUEST_TIMEOUT_MS, \
+        #                                      send_message_timeout_sec=settings.KAFKA_SEND_MESSAGE_TIMEOUT_SEC)
+        #if not self.kafka_connector.connect(settings.KAFKA_HOSTS):
+        #    raise Exception('Can\'t connect to kafka')
 
         self.avatar_generator = AvatarGenerator('data/avatar_palette.png', 'data/SanFranciscoDisplay-Regular.ttf')
 

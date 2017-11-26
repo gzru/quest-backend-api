@@ -6,6 +6,12 @@ class APIError(Exception):
         self.code = code
 
 
+class APIQueryError(APIError):
+
+    def __init__(self, message):
+        super(APIQueryError, self).__init__(message, 2)
+
+
 class APIUserTokenError(APIError):
 
     def __init__(self, message):
@@ -28,4 +34,10 @@ class APILogicalError(APIError):
 
     def __init__(self, message):
         super(APILogicalError, self).__init__(message, 8)
+
+
+class APIAccessError(APIError):
+
+    def __init__(self, message):
+        super(APIAccessError, self).__init__(message, 9)
 

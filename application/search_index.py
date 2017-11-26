@@ -96,7 +96,7 @@ class SearchIndex(object):
     def search_nearest(self, user_id, latitude, longitude, radius, callback):
         user_id_str = str(user_id)
         policy = {
-            'timeout': 100,
+            'timeout': 1000,
         }
         # Public
         query = self._aerospike_connector._client.query(self._namespace, self._global_set)

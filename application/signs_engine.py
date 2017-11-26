@@ -107,7 +107,7 @@ class SignsEngine(object):
             self._put_preview(info.sign_id, preview_blob)
         self._put_info(info.sign_id, info)
         # To searcher
-        self._put_to_searcher(info.sign_id, info, features)
+        #self._put_to_searcher(info.sign_id, info, features)
 
         return info.sign_id
 
