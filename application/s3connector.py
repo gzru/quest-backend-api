@@ -3,11 +3,11 @@ import boto3
 
 class S3Connector(object):
 
-    def __init__(self):
+    def __init__(self, endpoint_url, access_key_id, secret_access_key):
         self._client = boto3.client('s3',
-                                    endpoint_url='http://10.136.60.75:9000',
-                                    aws_access_key_id='quest',
-                                    aws_secret_access_key='theiWos1aiph2phiepoQu5gaiCoox1th')
+                                    endpoint_url=endpoint_url,
+                                    aws_access_key_id=access_key_id,
+                                    aws_secret_access_key=secret_access_key)
 
     def put_data_object(self, bucket, key, data):
         try:

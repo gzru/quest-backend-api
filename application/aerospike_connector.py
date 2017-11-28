@@ -19,14 +19,19 @@ class AerospikeConnector:
             'timeout': rw_timeout_ms
         }
 
-    def connect(self, hosts):
+    def connect(self, hosts, lua_user_path):
+        hosts_as = list()
+        for host in hosts:
+            parts = host.split(':')
+            hosts_as.append((parts[0], int(parts[1])))
+
         config = {
-            'hosts': hosts,
+            'hosts': hosts_as,
             'policies': {
                 'timeout': self._connection_timeout_ms
             },
             'lua': {
-                'user_path': 'lua/'
+                'user_path': lua_user_path
             }
         }
 

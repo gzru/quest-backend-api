@@ -1,10 +1,10 @@
+from config import Config
 from aerospike_connector import AerospikeConnector
 from kafka_connector import KafkaConnector
 from searcher_connector import SearcherConnector
 from twilio_connector import TwilioConnector
 from s3connector import S3Connector
 from avatar_generator import AvatarGenerator
-import settings
 
 
 class GlobalContext:
@@ -17,10 +17,13 @@ class GlobalContext:
         self.s3connector = None
 
     def initialize(self):
-        self.aerospike_connector = AerospikeConnector(max_record_size=settings.AEROSPIKE_MAX_RECORD_SIZE, \
-                                                      rw_timeout_ms=settings.AEROSPIKE_RW_TIMEOUT_MS, \
-                                                      connection_timeout_ms=settings.AEROSPIKE_CONNECTION_TIMEOUT_MS)
-        if not self.aerospike_connector.connect(settings.AEROSPIKE_HOSTS):
+        if not Config.initialize('/tmp/config.yaml'):
+            raise Exception('Can\'t read config')
+
+        self.aerospike_connector = AerospikeConnector(max_record_size=Config.AEROSPIKE_MAX_RECORD_SIZE, \
+                                                      rw_timeout_ms=Config.AEROSPIKE_RW_TIMEOUT_MS, \
+                                                      connection_timeout_ms=Config.AEROSPIKE_CONNECTION_TIMEOUT_MS)
+        if not self.aerospike_connector.connect(Config.AEROSPIKE_HOSTS, Config.AEROSPIKE_LUA_USER_PATH):
             raise Exception('Can\'t connect to aerospike')
 
         #self.kafka_connector = KafkaConnector(request_timeout_ms=settings.KAFKA_REQUEST_TIMEOUT_MS, \
@@ -32,5 +35,8 @@ class GlobalContext:
 
         self.searcher_connector = SearcherConnector()
         self.twilio_connector = TwilioConnector()
-        self.s3connector = S3Connector()
+
+        self.s3connector = S3Connector(Config.S3_ENDPOINT_URL, \
+                                       Config.S3_ACCESS_KEY_ID, \
+                                       Config.S3_SECRET_ACCESS_KEY)
 

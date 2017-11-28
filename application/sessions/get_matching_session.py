@@ -1,5 +1,6 @@
 from sessions.session import POSTSession
 from core.query import Query
+from config import Config
 from error import APIInternalServicesError
 from PIL import Image
 from io import BytesIO
@@ -35,11 +36,12 @@ class GetMatchingSession(POSTSession):
 
     def __init__(self, global_context):
         self._aerospike_connector = global_context.aerospike_connector
-        self._namespace = 'test'
+        self._namespace = Config.AEROSPIKE_NS_SIGNS
         self._image_set = 'sign_image'
-        self._matcher_host = '162.243.160.162'
+        # TODO use all matchers
+        self._matcher_host = Config.MATCHER_HOSTS[0]
         self._matcher_api_handler = '/api/matching/get'
-        self._timeout_sec = 10
+        self._timeout_sec = Config.MATCHER_TIMEOUT_SEC
         self._params = Params()
 
     def _init_session_params(self, query):

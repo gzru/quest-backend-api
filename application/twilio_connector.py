@@ -1,5 +1,5 @@
 from error import APIInternalServicesError
-import settings
+from config import Config
 from twilio.jwt.access_token import AccessToken
 from twilio.jwt.access_token.grants import ChatGrant, IpMessagingGrant
 from twilio.rest import Client
@@ -9,11 +9,12 @@ import logging
 class TwilioConnector(object):
 
     def __init__(self):
-        self._account_sid = settings.TWILIO_ACCOUNT_SID
-        self._auth_token = settings.TWILIO_AUTH_TOKEN
-        self._api_key = settings.TWILIO_API_KEY
-        self._api_secret = settings.TWILIO_API_SECRET
-        self._chat_service_sid = settings.TWILIO_CHAT_SERVICE_SID
+        self._account_sid = Config.TWILIO_ACCOUNT_SID
+        self._auth_token = Config.TWILIO_AUTH_TOKEN
+        self._api_key = Config.TWILIO_API_KEY
+        self._api_secret = Config.TWILIO_API_SECRET
+        self._chat_service_sid = Config.TWILIO_CHAT_SERVICE_SID
+        self._push_credential_sid = Config.TWILIO_PUSH_CREDENTIAL_SID
 
     def make_messaging_token(self, user_id, uuid):
         try:
@@ -23,8 +24,7 @@ class TwilioConnector(object):
             token = AccessToken(self._account_sid, self._api_key, self._api_secret, identity=identity)
 
             # Create an Chat grant and add to token
-            # TODO move into settings
-            chat_grant = ChatGrant(service_sid=self._chat_service_sid, push_credential_sid='CR5776d4fff23e9bf0d85389af5c763eb3')
+            chat_grant = ChatGrant(service_sid=self._chat_service_sid, push_credential_sid=self._push_credential_sid)
             token.add_grant(chat_grant)
 
             return token.to_jwt().decode('utf-8')
