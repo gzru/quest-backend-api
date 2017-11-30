@@ -63,7 +63,7 @@ class AccessToken(object):
             token.decode(string)
             return token
         except Exception as ex:
-            logging.error('Failed to decode token string, {}', ex)
+            logging.error('Failed to decode token string, %s', ex)
             raise APIUserTokenError('Failed to decode token string')
 
 

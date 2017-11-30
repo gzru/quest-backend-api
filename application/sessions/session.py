@@ -1,10 +1,13 @@
 from core.query import Query
 import json
+import logging
 
 
 class POSTSession(object):
 
     def parse_query(self, data):
+        logging.info(data[:256])
+
         ''' Parse json '''
         query = Query.from_json(data)
 

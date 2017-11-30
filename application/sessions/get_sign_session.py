@@ -11,7 +11,7 @@ class Params(object):
         self.properties = None
 
     def parse(self, query):
-        self.user_token = query.get_user_token('user_id')
+        self.user_token = query.get_user_token()
         self.sign_id = query.get_required_int64('sign_id')
         self.properties = self._get_properties(query)
 

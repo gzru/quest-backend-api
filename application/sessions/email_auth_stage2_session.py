@@ -1,6 +1,7 @@
 from sessions.session import POSTSession
 from auth_engine import AuthEngine
 from users_engine import UsersEngine, UserInfo
+from core.access_token import AccessToken
 import logging
 
 
@@ -37,7 +38,7 @@ class EMailAuthStage2Session(POSTSession):
         result = {
             'success': True,
             'user_id': int(user_id),
-            'user_token': str(user_id)
+            'user_token': AccessToken.make_encoded(user_id)
         }
         return result
 

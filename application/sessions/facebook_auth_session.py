@@ -1,7 +1,9 @@
 from sessions.session import POSTSession
 from users_engine import UsersEngine, UserInfo
+from core.access_token import AccessToken
 import requests
 import logging
+import json
 
 
 class Params(object):
@@ -43,8 +45,8 @@ class FacebookAuthSession(POSTSession):
 
         result = {
             'success': True,
-            'user_token': str(user_id),
-            'user_id': int(user_id)
+            'user_token': AccessToken.make_encoded(user_id),
+            'user_id': user_id
         }
         return result
 

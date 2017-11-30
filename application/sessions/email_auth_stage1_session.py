@@ -37,6 +37,6 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = EMailAuthStage1Session(global_context)
-    s.parse_query('{"email": "gz_@bk.ru"}')
+    s.parse_query('{"email": "kitty0x29a@gmail.com"}')
     print s.execute()
 

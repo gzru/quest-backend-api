@@ -7,6 +7,7 @@ class Params(object):
 
     def __init__(self):
         self.user_token = None
+        self.user_token_str = None
         self.name = None
         self.username = None
         self.email = None
@@ -15,6 +16,7 @@ class Params(object):
 
     def parse(self, query):
         self.user_token = query.get_user_token()
+        self.user_token_str = query.get_required_str('user_token')
         self.name = query.get_optional_str('name')
         self.username = query.get_optional_str('username')
         self.email = query.get_optional_str('email')
@@ -52,7 +54,7 @@ class UpdateProfileSession(POSTSession):
 
         result = {
             'success': True,
-            'user_token': self._params.user_token.encode()
+            'user_token': self._params.user_token_str
         }
         return result
 
