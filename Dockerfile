@@ -18,8 +18,8 @@ RUN pip install -r requirements.txt
 
 COPY application/ /application/
 
-# Expose port 5000 for uwsgi
+# Expose port 8001 for uwsgi
 EXPOSE 8001
 
-CMD ["uwsgi", "--ini", "quest_docker.ini"]
+CMD ["uwsgi", "--ini", "quest-docker.ini"]
 

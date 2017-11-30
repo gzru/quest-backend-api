@@ -7,3 +7,4 @@ requests==2.18.4
 twilio==6.6.2
 boto3==1.4.7
 pycrypto==2.6.1
+PyYAML==3.12
