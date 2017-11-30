@@ -25,19 +25,7 @@ class SignInfo(object):
         self.views_count = 0
 
     def encode(self):
-        # blob
-        data = {
-            'sign_id': self.sign_id,
-            'user_id': self.user_id,
-            'latitude': self.latitude,
-            'longitude': self.longitude,
-            'radius': self.radius,
-            'time_to_live': self.time_to_live,
-            'timestamp': self.timestamp
-        }
-        # a record itself
         record = {
-            'data': json.dumps(data),
             'sign_id': self.sign_id,
             'user_id': self.user_id,
             'latitude': self.latitude,
@@ -52,18 +40,13 @@ class SignInfo(object):
         return record
 
     def decode(self, record):
-        # TODO: remove data json
-        data = json.loads(record['data'])
-        def _get(prop):
-            return record.get(prop, data.get(prop))
-
-        self.sign_id = _get('sign_id')
-        self.user_id = _get('user_id')
-        self.latitude = _get('latitude')
-        self.longitude = _get('longitude')
-        self.radius = _get('radius')
-        self.time_to_live = _get('time_to_live')
-        self.timestamp = int(_get('timestamp'))
+        self.sign_id = record.get('sign_id')
+        self.user_id = record.get('user_id')
+        self.latitude = record.get('latitude')
+        self.longitude = record.get('longitude')
+        self.radius = record.get('radius')
+        self.time_to_live = record.get('time_to_live')
+        self.timestamp = int(record.get('timestamp'))
         self.is_private = bool(record.get('is_private', True))
         self.likes_count = record.get('likes_count', 0)
         self.views_count = record.get('views_count', 0)

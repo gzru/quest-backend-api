@@ -51,18 +51,7 @@ class UserInfo(object):
         self.email = None
 
     def encode(self):
-        # blob
-        data = {
-            'user_id': self.user_id,
-            'facebook_user_id': self.facebook_user_id,
-            'facebook_access_token': self.facebook_access_token,
-            'name': self.name,
-            'username': self.username,
-            'email': self.email
-        }
-        # a record itself
         record = {
-            'data': json.dumps(data),
             'user_id': self.user_id,
             'fb_user_id': self.facebook_user_id,
             'fb_token': self.facebook_access_token,
@@ -73,17 +62,12 @@ class UserInfo(object):
         return record
 
     def decode(self, record):
-        # TODO: remove data json
-        data = json.loads(record['data'])
-        def _get(prop):
-            return record.get(prop, data.get(prop))
-
-        self.user_id = _get('user_id')
-        self.facebook_user_id = record.get('fb_user_id', data.get('facebook_user_id'))
-        self.facebook_access_token = record.get('fb_token', data.get('facebook_access_token'))
-        self.name = _get('name')
-        self.username = _get('username')
-        self.email = _get('email')
+        self.user_id = record.get('user_id')
+        self.facebook_user_id = record.get('fb_user_id')
+        self.facebook_access_token = record.get('fb_token')
+        self.name = record.get('name')
+        self.username = record.get('username')
+        self.email = record.get('email')
 
 
 class UsersRelation(object):
