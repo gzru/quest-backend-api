@@ -86,7 +86,7 @@ class AerospikeConnector:
             logging.error('Database error: {}'.format(ex))
             raise APIInternalServicesError('Database error: {}'.format(ex))
 
-    def put_bins(self, key, bins, ttl=0):
+    def put_bins(self, key, bins, ttl=aerospike.TTL_NEVER_EXPIRE):
         self._put_one(key, bins, ttl)
 
     def get_bins(self, key, bins=None):
@@ -102,7 +102,7 @@ class AerospikeConnector:
             logging.error('Database error: {}'.format(ex))
             raise APIInternalServicesError('Database error: {}'.format(ex))
 
-    def put_data(self, key, data, ttl=0):
+    def put_data(self, key, data, ttl=aerospike.TTL_NEVER_EXPIRE):
         chunks = self._split_by_chunks(key, data)
         for chunk in chunks:
             bins = {
