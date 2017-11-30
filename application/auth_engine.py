@@ -1,4 +1,4 @@
-from cipher import AESCipher
+from core.cipher import AESCipher
 from error import APIInconsistentAuthCodeError, APIInternalServicesError, APILogicalError
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
