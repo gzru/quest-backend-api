@@ -1,4 +1,5 @@
 from global_context import GlobalContext
+from config import Config
 from error import APILogicalError
 import base64
 import json
@@ -110,7 +111,7 @@ class UsersEngine(object):
         self._aerospike_connector = global_context.aerospike_connector
         self._twilio_connector = global_context.twilio_connector
         self._s3connector = global_context.s3connector
-        self._namespace = 'test'
+        self._namespace = Config.AEROSPIKE_NS_USERS
         self._info_set = 'user_info'
         self._meta_set = 'user_meta'
         self._picture_set = 'user_picture'

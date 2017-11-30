@@ -1,4 +1,5 @@
 from error import APILogicalError, APIInternalServicesError
+from config import Config
 from searcher_connector import SearcherMapClustersQParams
 from search_index import SearchIndex
 from searcher import Searcher, SearchParams
@@ -76,7 +77,7 @@ class SignsEngine(object):
         self._searcher_connector = global_context.searcher_connector
         self._s3connector = global_context.s3connector
         self._search_index = SearchIndex(global_context.aerospike_connector)
-        self._namespace = 'test'
+        self._namespace = Config.AEROSPIKE_NS_SIGNS
         self._info_set = 'sign_info'
         self._features_set = 'sign_features'
         self._meta_set = 'sign_meta'

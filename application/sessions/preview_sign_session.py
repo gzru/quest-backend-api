@@ -1,4 +1,5 @@
 from sessions.session import POSTSession
+from config import Config
 from PIL import Image
 from io import BytesIO
 import base64
@@ -21,7 +22,7 @@ class PreviewSignSession(POSTSession):
 
     def __init__(self, global_context):
         self._aerospike_connector = global_context.aerospike_connector
-        self._namespace = 'test'
+        self._namespace = Config.AEROSPIKE_NS_SIGNS
         self._preview_set = 'sign_preview'
         self._params = Params()
 

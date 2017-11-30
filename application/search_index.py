@@ -1,4 +1,5 @@
 from error import APILogicalError
+from config import Config
 import aerospike
 import logging
 import math
@@ -19,7 +20,7 @@ class SearchIndex(object):
 
     def __init__(self, connector):
         self._aerospike_connector = connector
-        self._namespace = 'test'
+        self._namespace = Config.AEROSPIKE_NS_SIGNS_SEARCH_IDX
         self._global_set = 'search_index_global'
         self._private_set = 'search_index_private'
 
