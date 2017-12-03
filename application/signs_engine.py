@@ -1,6 +1,5 @@
 from error import APILogicalError, APIInternalServicesError
 from config import Config
-from searcher_connector import SearcherMapClustersQParams
 from search_index import SearchIndex
 from searcher import Searcher, SearchParams
 import hashlib
@@ -56,8 +55,6 @@ class SignsEngine(object):
 
     def __init__(self, global_context):
         self._aerospike_connector = global_context.aerospike_connector
-        self._kafka_connector = global_context.kafka_connector
-        self._searcher_connector = global_context.searcher_connector
         self._s3connector = global_context.s3connector
         self._search_index = SearchIndex(global_context.aerospike_connector)
         self._namespace = Config.AEROSPIKE_NS_SIGNS
@@ -90,8 +87,6 @@ class SignsEngine(object):
         if preview_blob != None:
             self._put_preview(info.sign_id, preview_blob)
         self._put_info(info.sign_id, info)
-        # To searcher
-        #self._put_to_searcher(info.sign_id, info, features)
 
         return info.sign_id
 
@@ -224,85 +219,6 @@ class SignsEngine(object):
         if data == None:
             return None
         return base64.b64encode(data)
-
-    def _put_to_searcher(self, sign_id, info, features):
-        try:
-            request = {
-                'sign_id': sign_id,
-                'user_id': info.user_id,
-                'latitude': info.latitude,
-                'longitude': info.longitude,
-                'radius': info.radius,
-                'time_to_live': info.time_to_live,
-                'timestamp': info.timestamp,
-                'features': features
-            }
-            url = 'http://{}:{}/api/sign/put'.format(self._searcher_host, self._searcher_port)
-            resp = requests.post(url, data=json.dumps(request), timeout=self._searcher_req_timeout)
-            result = json.loads(resp.text)
-        except Exception as ex:
-            logging.error('Searcher put request failed: {}'.format(ex))
-            raise APIInternalServicesError('Searcher put request failed: {}'.format(ex))
-
-        if result.get('sign_id') == None:
-            raise APIInternalServicesError('Searcher put request failed: Bad response: {}'.format(resp.text))
-
-    def search_signs(self, user_id, lat, lon, radius, max_n, min_rank, sort_by, debug, features):
-        signs, debug = self._ask_searcher(user_id, lat, lon, radius, max_n, min_rank, sort_by, debug, features)
-        sign_ids = list()
-        for sign in signs:
-            sign_ids.append(sign['sign_id'])
-
-        # TODO
-        info_list = self.get_info_many(sign_ids)
-        has_access_list = self._check_access(user_id, sign_ids)
-
-        result = list()
-        for i in range(len(signs)):
-            info = info_list[i]
-            if info == None:
-                logging.warning('Found removed sign or logical error, sign_id = {}'.format(sign_ids[i]))
-                continue
-            if info.is_private and info.user_id != user_id and not has_access_list[i]:
-                continue
-            result.append(signs[i])
-        return result, debug
-
-    def get_signs_clusters(self, params):
-        return self._searcher_connector.get_map_clusters(params)
-
-    def _ask_searcher(self, user_id, lat, lon, radius, max_n, min_rank, sort_by, debug, features):
-        logging.info('_ask_searcher: Retrieve signs')
-        try:
-            request = {
-                'user_id': user_id,
-                'latitude': lat,
-                'longitude': lon,
-                'radius': radius,
-                'max_n': max_n,
-                'min_rank': min_rank,
-                'features': features
-            }
-            if sort_by != None:
-                request['sort_by'] = sort_by
-            if debug != None:
-                request['debug'] = debug
-
-            url = 'http://{}:{}/api/sign/search'.format(self._searcher_host, self._searcher_port)
-            resp = requests.post(url, data=json.dumps(request), timeout=self._searcher_req_timeout)
-            result = json.loads(resp.text)
-        except Exception as ex:
-            logging.error('Searcher search request failed: {}'.format(ex))
-            raise APIInternalServicesError('Searcher search request failed: {}'.format(ex))
-
-        signs = result.get('signs')
-        if signs == None:
-            raise APIInternalServicesError('Searcher search request failed: Bad response: {}'.format(resp.text))
-
-        debug = result.get('debug')
-
-        logging.info('_ask_searcher: Got {} signs'.format(len(signs)))
-        return signs, debug
 
     def _check_access(self, user_id, sign_ids):
         keys = list()
