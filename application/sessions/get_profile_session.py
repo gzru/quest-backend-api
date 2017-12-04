@@ -41,6 +41,7 @@ class GetProfileSession(POSTSession):
         if info == None:
             raise APILogicalError('User not found')
 
+        # TODO remove facebook_access_token from result
         result = {
             'user_id': info.user_id,
             'facebook_user_id': info.facebook_user_id,

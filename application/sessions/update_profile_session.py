@@ -28,6 +28,7 @@ class UpdateProfileSession(POSTSession):
 
     def __init__(self, global_context):
         self._users_engine = UsersEngine(global_context)
+        self._access_rules = global_context.access_rules
         self._params = Params()
 
     def _init_session_params(self, query):
@@ -35,6 +36,10 @@ class UpdateProfileSession(POSTSession):
 
     def _run_session(self):
         user_id = self._params.user_token.user_id
+
+        # Check user credentials
+        self._access_rules.check_can_edit_user_info(self._params.user_token, user_id)
+
         user_info = self._users_engine.get_info(user_id)
         if user_info == None:
             raise APILogicalError('User not found')

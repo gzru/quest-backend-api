@@ -16,6 +16,7 @@ class UpdateSignSession(POSTSession):
     def __init__(self, global_context):
         self._params = Params()
         self._sign_engine = SignsEngine(global_context)
+        self._access_rules = global_context.access_rules
 
     def _init_session_params(self, query):
         self._params.user_token = query.get_user_token()
@@ -25,7 +26,8 @@ class UpdateSignSession(POSTSession):
     def _run_session(self):
         info = self._sign_engine.get_info(self._params.sign_id)
 
-        self._params.user_token.check_access(info.user_id)
+        # Check user credentials
+        self._access_rules.check_can_edit_sign(self._params.user_token, sign_info=info)
 
         if self._params.is_private != None:
             self._sign_engine.set_sign_privacy(self._params.sign_id, self._params.is_private)

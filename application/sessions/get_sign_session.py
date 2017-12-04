@@ -30,6 +30,7 @@ class GetSignSession(POSTSession):
 
     def __init__(self, global_context):
         self._sign_engine = SignsEngine(global_context)
+        self._access_rules = global_context.access_rules
         self._params = Params()
 
     def _init_session_params(self, query):
@@ -37,6 +38,9 @@ class GetSignSession(POSTSession):
 
     def _run_session(self):
         info = self._sign_engine.get_info(self._params.sign_id)
+
+        # Check user credentials
+        self._access_rules.check_can_read_sign(self._params.user_token, sign_info=info)
 
         result = {
             'sign_id': info.sign_id,

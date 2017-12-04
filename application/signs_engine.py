@@ -220,7 +220,11 @@ class SignsEngine(object):
             return None
         return base64.b64encode(data)
 
-    def _check_access(self, user_id, sign_ids):
+    def check_access(self, user_id, sign_id):
+        key = '{}:{}'.format(user_id, sign_id)
+        return self._aerospike_connector.check_exists((self._namespace, self._access_set, key))
+
+    def check_access_many(self, user_id, sign_ids):
         keys = list()
         for sign_id in sign_ids:
             key = '{}:{}'.format(user_id, sign_id)

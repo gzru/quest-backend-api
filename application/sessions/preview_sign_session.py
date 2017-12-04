@@ -8,11 +8,13 @@ import base64
 class Params(object):
 
     def __init__(self):
+        self.user_token = None
         self.sign_id = None
         self.height = None
         self.width = None
 
     def parse(self, query):
+        self.user_token = query.get_user_token()
         self.sign_id = query.get_required_int64('sign_id')
         self.height = query.get_optional_int64('height')
         self.width = query.get_optional_int64('width')
@@ -25,11 +27,15 @@ class PreviewSignSession(POSTSession):
         self._namespace = Config.AEROSPIKE_NS_SIGNS
         self._preview_set = 'sign_preview'
         self._params = Params()
+        self._access_rules = global_context.access_rules
 
     def _init_session_params(self, query):
         self._params.parse(query)
 
     def _run_session(self):
+        # Check user credentials
+        self._access_rules.check_can_read_sign(self._params.user_token, sign_id=self._params.sign_id)
+
         result = {
             'preview_blob': self._get_preview(self._params.sign_id, self._params.height, self._params.width)
         }

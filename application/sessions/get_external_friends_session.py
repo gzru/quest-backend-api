@@ -24,12 +24,16 @@ class GetExternalFriendsSession(POSTSession):
 
     def __init__(self, global_context):
         self._users_engine = UsersEngine(global_context)
+        self._access_rules = global_context.access_rules
         self._params = Params()
 
     def _init_session_params(self, query):
         self._params.parse(query)
 
     def _run_session(self):
+        # Check user credentials
+        self._access_rules.check_can_view_private_info(self._params.user_token, self._params.user_id)
+
         info = self._users_engine.get_info(self._params.user_id)
         if info == None:
             raise APILogicalError('User {} not found'.format(self._params.user_id))

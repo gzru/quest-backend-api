@@ -23,6 +23,8 @@ class GetSignPublicLinkContentSession(object):
         self._query.parse(sign_id)
 
     def execute(self):
+        # TODO check sign exists
+
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader('templates/')
         )
