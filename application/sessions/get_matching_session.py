@@ -78,7 +78,7 @@ class GetMatchingSession(POSTSession):
         try:
             request = json.dumps({'image_screen': image_screen_b64, 'image_background': image_background_b64})
 
-            url = 'http://' + self._matcher_host + self._matcher_api_handler
+            url = 'https://' + self._matcher_host + self._matcher_api_handler
             resp = requests.post(url, data=request, timeout=self._timeout_sec)
         except Exception as ex:
             logging.error(ex)
