@@ -16,7 +16,7 @@ class GlobalContext:
         self.s3connector = None
 
     def initialize(self):
-        if not Config.initialize('/tmp/config.yaml'):
+        if not Config.initialize('/etc/quest/config.yaml'):
             raise Exception('Can\'t read config')
 
         self.aerospike_connector = AerospikeConnector(max_record_size=Config.AEROSPIKE_MAX_RECORD_SIZE, \

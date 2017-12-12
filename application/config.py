@@ -57,6 +57,10 @@ class Config(object):
         Config.AEROSPIKE_CONNECTION_TIMEOUT_MS = config_data.get('aerospike_connection_timeout_ms', Config.AEROSPIKE_CONNECTION_TIMEOUT_MS)
         Config.AEROSPIKE_RW_TIMEOUT_MS = config_data.get('aerospike_rw_timeout_ms', Config.AEROSPIKE_RW_TIMEOUT_MS)
 
+        Config.AEROSPIKE_NS_USERS = config_data.get('aerospike_ns_users', Config.AEROSPIKE_NS_USERS)
+        Config.AEROSPIKE_NS_SIGNS = config_data.get('aerospike_ns_signs', Config.AEROSPIKE_NS_SIGNS)
+        Config.AEROSPIKE_NS_SIGNS_SEARCH_IDX = config_data.get('aerospike_ns_signs_search_idx', Config.AEROSPIKE_NS_SIGNS_SEARCH_IDX)
+
         Config.S3_ENDPOINT_URL = config_data.get('s3_endpoint_url', Config.S3_ENDPOINT_URL)
         Config.S3_ACCESS_KEY_ID = config_data.get('s3_access_key_id', Config.S3_ACCESS_KEY_ID)
         Config.S3_SECRET_ACCESS_KEY = config_data.get('s3_secret_access_key', Config.S3_SECRET_ACCESS_KEY)
@@ -66,10 +70,12 @@ class Config(object):
 
         return True
 
-"""
-import logging
-import sys
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
-#Config.initialize('/tmp/config.yaml')
-"""
+if __name__ == "__main__":
+    import logging
+    import sys
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
+    Config.initialize('/tmp/config.yaml')
+    print Config.AEROSPIKE_HOSTS
+
