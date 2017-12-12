@@ -34,7 +34,7 @@ class Config(object):
 
     # Matching
     MATCHER_HOSTS = [
-        '162.243.160.162:80'
+        'matcher.quest.aiarlabs.com'
     ]
     MATCHER_TIMEOUT_SEC = 10
 
