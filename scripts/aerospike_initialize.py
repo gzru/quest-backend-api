@@ -1,6 +1,5 @@
 import aerospike
 
-
 AEROSPIKE_CONFIG = {
     'hosts': [
         ('165.227.86.99', 3000)
@@ -20,7 +19,7 @@ client.index_geo2dsphere_create(NAMESPACE, SEARCH_INDEX_GLOBAL_SET, SEARCH_INDEX
 client.index_geo2dsphere_create(NAMESPACE, SEARCH_INDEX_PRIVATE_SET, SEARCH_INDEX_GEO_BIN, SEARCH_INDEX_PRIVATE_SET + '_geo_index')
 
 # Upload udf script
-client.udf_put('search.lua')
+client.udf_put('../application/lua/search.lua')
 
 client.close()
 
