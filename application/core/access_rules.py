@@ -15,7 +15,7 @@ class AccessRules(object):
         if sign_info == None:
             sign_info = self._signs_engine.get_info(sign_id)
 
-        if sign_info.is_public == True or sing_info.user_id == access_token.user_id:
+        if sign_info.is_private == False or sign_info.user_id == access_token.user_id:
             return True
 
         # Check access table
@@ -32,7 +32,7 @@ class AccessRules(object):
         if sign_info == None:
             sign_info = self._signs_engine.get_info(sign_id)
 
-        if sing_info.user_id == access_token.user_id:
+        if sign_info.user_id == access_token.user_id:
             return True
 
         raise APIAccessError('User {} has no edit access to sign {}'.format(access_token.user_id, sign_info.sign_id))

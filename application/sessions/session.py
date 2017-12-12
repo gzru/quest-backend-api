@@ -6,7 +6,7 @@ import logging
 class POSTSession(object):
 
     def parse_query(self, data):
-        logging.info(data[:256])
+        logging.info(data[:512])
 
         ''' Parse json '''
         query = Query.from_json(data)

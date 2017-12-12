@@ -68,7 +68,8 @@ class AccessToken(object):
 
 if __name__ == "__main__":
     token = AccessToken()
-    token.user_id = 123
+    token.user_id = 2414917961944660396
+    token.is_admin = True
     string = token.encode()
     print string
 

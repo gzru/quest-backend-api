@@ -67,3 +67,14 @@ class GetSignSession(POSTSession):
 
         return result
 
+
+if __name__ == "__main__":
+    from global_context import GlobalContext
+    global_context = GlobalContext()
+    global_context.initialize()
+
+    s = GetSignSession(global_context)
+    s.parse_query('{"sign_id": 70830174557746501, "user_token": "URGJr/0QamXu0anNtoD/3gYDiREJwFyVLOG4aNQU0b9yyehCP5YtOKHNV1AhDvd/21oixjfEJro4ffxbxgWJ0IQXLpBi8PMF55HiG06UWFn39vZq0mO7+qHrGEgNPrfG"}')
+    print s.execute()
+
+

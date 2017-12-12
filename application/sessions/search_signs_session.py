@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     s = SearchSignsSession(global_context)
     #s.parse_query('{"latitude":54.713336944580078,"features":[],"debug":true,"radius":100.67225646972656,"min_rank":0.80000001192092896,"longitude":20.538284301757812,"user_token":"123"}')
-    s.parse_query('{"latitude": -35.6709, "longitude": -9.6504, "user_token": "jGoGqIqfqfB/eSCGDIabQ6FNLgKpERPeUanlbTJUYCXstTnyso2PZYZDExRJlSjWUwadpX3NWqQP7S4YS0baQmY1RHFNEWrMY6G5CDY427EUxwMBwDqDF1HtrePnWJxg", "radius": 1000}')
+    s.parse_query('{"user_token": "URGJr/0QamXu0anNtoD/3gYDiREJwFyVLOG4aNQU0b9yyehCP5YtOKHNV1AhDvd/21oixjfEJro4ffxbxgWJ0IQXLpBi8PMF55HiG06UWFn39vZq0mO7+qHrGEgNPrfG", "radius": 1000, "latitude": -6.0923, "longitude": 29.4041}')
     print s.execute()
 
 

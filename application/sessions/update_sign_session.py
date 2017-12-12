@@ -41,6 +41,6 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = UpdateSignSession(global_context)
-    s.parse_query('{"user_token": "Gn0qsNoPY2BJGhfVYpKaVilLcClAMhbkOUocm6wTCEYfrL2sdzOs3FDVPOKk/paM9rsRALIS5VnnNxPGgcq33gBrcuy5cvHsSddQY8SqGNJ5lBDPZC4nT4imTibF+Uz/", "sign_id": 6553327435719305655}')
+    s.parse_query('{"user_token": "Gn0qsNoPY2BJGhfVYpKaVilLcClAMhbkOUocm6wTCEYfrL2sdzOs3FDVPOKk/paM9rsRALIS5VnnNxPGgcq33gBrcuy5cvHsSddQY8SqGNJ5lBDPZC4nT4imTibF+Uz/", "sign_id": 1152699052946918040}')
     print s.execute()
 

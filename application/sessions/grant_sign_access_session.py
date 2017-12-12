@@ -6,10 +6,12 @@ class Params(object):
 
     def __init__(self):
         self.user_token = None
+        self.user_id = None
         self.sign_id = None
 
     def parse(self, query):
         self.user_token = query.get_user_token()
+        self.user_id = query.get_required_int64('user_id')
         self.sign_id = query.get_required_int64('sign_id')
 
 
@@ -38,7 +40,8 @@ if __name__ == "__main__":
     global_context.initialize()
 
     s = GrantSignAccessSession(global_context)
-    s.parse_query('{"user_id":123, "sign_id":345}')
+    #s.parse_query('{"user_token": "URGJr/0QamXu0anNtoD/3gYDiREJwFyVLOG4aNQU0b9yyehCP5YtOKHNV1AhDvd/21oixjfEJro4ffxbxgWJ0IQXLpBi8PMF55HiG06UWFn39vZq0mO7+qHrGEgNPrfG","user_id":2414917961944660396, "sign_id":6732090693452497762}')
+    s.parse_query('{"user_token": "EUbAWgStjywFqH2blkYfZfovL7C55tX/l1G9p1jujikxC2mH+8PfGsedirbx0Maz73tv2dGPnSg0xMBpWgiNSux3V++wnN6xWnnZWumtVVpdx51lZlvbsTCYSJEo09CE", "user_id": 2414917961944660396, "sign_id": 6732090693452497762}')
     print s.execute()
 
 
