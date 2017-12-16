@@ -17,9 +17,11 @@ RUN pip install uwsgi
 RUN pip install -r requirements.txt
 
 COPY application/ /application/
+COPY entrypoint.sh /application/
 
 # Expose port 8001 for uwsgi
 EXPOSE 8001
 
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["uwsgi", "--ini", "quest-docker.ini"]
 

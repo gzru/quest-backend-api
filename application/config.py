@@ -18,6 +18,9 @@ class Config(object):
     AEROSPIKE_NS_USERS = 'test'
     AEROSPIKE_NS_SIGNS = 'test'
     AEROSPIKE_NS_SIGNS_SEARCH_IDX = 'test'
+    AEROSPIKE_SIGNS_SEARCH_IDX_GLOBAL_SET = 'search_index_global'
+    AEROSPIKE_SIGNS_SEARCH_IDX_PRIVATE_SET = 'search_index_private'
+    AEROSPIKE_SIGNS_SEARCH_IDX_GEO_BIN = 'location'
 
     # S3
     S3_ENDPOINT_URL = 'http://10.136.60.75:9000'

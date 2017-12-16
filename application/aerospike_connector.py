@@ -3,7 +3,8 @@ import aerospike
 import logging
 
 
-class AerospikeConnector:
+class AerospikeConnector(object):
+
     def __init__(self, max_record_size, rw_timeout_ms, connection_timeout_ms):
         self._client = None
         self._max_record_size = max_record_size
