@@ -1,0 +1,53 @@
+{
+   "mappings" : {
+      "profile" : {
+         "properties" : {
+            "name" : {
+               "type" : "text",
+               "analyzer" : "full_name",
+               "fields" : {
+                  "partial" : {
+                     "type" : "text",
+                     "analyzer" : "partial_name",
+                     "search_analyzer" : "full_name"
+                  }
+               }
+            }
+         }
+      }
+   },
+   "settings" : {
+      "analysis" : {
+         "filter" : {
+            "name_ngrams" : {
+               "side" : "front",
+               "max_gram" : 10,
+               "min_gram" : 1,
+               "type" : "edgeNGram"
+            }
+         },
+         "analyzer" : {
+            "full_name" : {
+               "filter" : [
+                  "standard",
+                  "lowercase",
+                  "asciifolding"
+               ],
+               "type" : "custom",
+               "tokenizer" : "standard"
+            },
+            "partial_name" : {
+               "filter" : [
+                  "standard",
+                  "lowercase",
+                  "asciifolding",
+                  "name_ngrams"
+               ],
+               "type" : "custom",
+               "tokenizer" : "standard"
+            }
+         }
+      }
+   }
+}
+
