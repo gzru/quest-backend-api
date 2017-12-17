@@ -1,5 +1,5 @@
 from config import Config
-from aerospike_connector import AerospikeConnector
+from connectors.aerospike_connector import AerospikeConnector
 
 
 if not Config.initialize('/etc/quest/config.yaml'):

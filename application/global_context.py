@@ -1,7 +1,7 @@
 from config import Config
-from aerospike_connector import AerospikeConnector
-from twilio_connector import TwilioConnector
-from s3connector import S3Connector
+from connectors.aerospike_connector import AerospikeConnector
+from connectors.twilio_connector import TwilioConnector
+from connectors.s3connector import S3Connector
 from avatar_generator import AvatarGenerator
 from core.access_rules import AccessRules
 
