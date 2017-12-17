@@ -3,11 +3,7 @@
 set -e
 set -x
 
-
-if [ -f pre-install.py ]
-then
-    python pre-install.py
-fi
+python -m pre-install.aerospike_initialization
 
 exec "$@"
 
