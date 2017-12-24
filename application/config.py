@@ -41,6 +41,11 @@ class Config(object):
     ]
     MATCHER_TIMEOUT_SEC = 10
 
+    # Elasticsearch
+    ELASTICSEARCH_ENABLED = False
+    ELASTICSEARCH_HOSTS = []
+    ELASTICSEARCH_TIMEOUT_SEC = 0.1
+
 
     @staticmethod
     def initialize(filepath):
@@ -70,6 +75,10 @@ class Config(object):
 
         Config.MATCHER_HOSTS = config_data.get('matcher_hosts', Config.MATCHER_HOSTS)
         Config.MATCHER_TIMEOUT_SEC = config_data.get('matcher_timeout_sec', Config.MATCHER_TIMEOUT_SEC)
+
+        Config.ELASTICSEARCH_ENABLED = config_data.get('elasticsearch_enabled', Config.ELASTICSEARCH_ENABLED)
+        Config.ELASTICSEARCH_HOSTS = config_data.get('elasticsearch_hosts', Config.ELASTICSEARCH_HOSTS)
+        Config.ELASTICSEARCH_TIMEOUT_SEC = config_data.get('elasticsearch_timeout_sec', Config.ELASTICSEARCH_TIMEOUT_SEC)
 
         return True
 

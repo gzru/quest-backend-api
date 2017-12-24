@@ -2,6 +2,7 @@ from config import Config
 from connectors.aerospike_connector import AerospikeConnector
 from connectors.twilio_connector import TwilioConnector
 from connectors.s3connector import S3Connector
+from connectors.elasticsearch_connector import ElasticsearchConnector
 from avatar_generator import AvatarGenerator
 from core.access_rules import AccessRules
 
@@ -14,6 +15,7 @@ class GlobalContext:
         self.avatar_generator = None
         self.twilio_connector = None
         self.s3connector = None
+        self.elasticsearch_connector = None
 
     def initialize(self):
         if not Config.initialize('/etc/quest/config.yaml'):
@@ -32,4 +34,8 @@ class GlobalContext:
         self.s3connector = S3Connector(Config.S3_ENDPOINT_URL, \
                                        Config.S3_ACCESS_KEY_ID, \
                                        Config.S3_SECRET_ACCESS_KEY)
+
+        self.elasticsearch_connector = ElasticsearchConnector(Config.ELASTICSEARCH_HOSTS, \
+                                                              Config.ELASTICSEARCH_TIMEOUT_SEC, \
+                                                              enabled=Config.ELASTICSEARCH_ENABLED)
 

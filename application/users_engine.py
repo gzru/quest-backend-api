@@ -95,6 +95,7 @@ class UsersEngine(object):
         self._aerospike_connector = global_context.aerospike_connector
         self._twilio_connector = global_context.twilio_connector
         self._s3connector = global_context.s3connector
+        self._elasticsearch_connector = global_context.elasticsearch_connector
         self._namespace = Config.AEROSPIKE_NS_USERS
         self._info_set = 'user_info'
         self._meta_set = 'user_meta'
@@ -118,6 +119,7 @@ class UsersEngine(object):
     def put_info(self, info):
         info_key = (self._namespace, self._info_set, str(info.user_id))
         self._aerospike_connector.put_bins(info_key, info.encode())
+        self._elasticsearch_connector.set_user_name(info.user_id, info.name)
 
     def get_info(self, user_id):
         info_key = (self._namespace, self._info_set, str(user_id))
@@ -247,20 +249,27 @@ class UsersEngine(object):
         return check_results
 
     def search(self, keywords):
-        res = self._aerospike_connector.scan(self._namespace, self._info_set, ['data'])
-
         result = list()
-        for entry in res:
-            data = json.loads(entry.get('data'))
-            user_id = data.get('user_id')
-            name = data.get('name')
-            if user_id == None or name == None:
-                continue
-            profile = {
-                'user_id': user_id,
-                'name': name
-            }
-            result.append(profile)
+        if Config.ELASTICSEARCH_ENABLED:
+            elastic_results = self._elasticsearch_connector.search_users_by_name(keywords)
+            for entry in elastic_results:
+                profile = {
+                    'user_id': entry.user_id,
+                    'name': entry.name
+                }
+                result.append(profile)
+        else:
+            res = self._aerospike_connector.scan(self._namespace, self._info_set, ['user_id', 'name'])
+            for entry in res:
+                user_id = entry.get('user_id')
+                name = entry.get('name')
+                if user_id == None or name == None:
+                    continue
+                profile = {
+                    'user_id': user_id,
+                    'name': name
+                }
+                result.append(profile)
         return result
 
     def put_sign(self, user_id, sign_id):
@@ -337,13 +346,21 @@ if __name__ == "__main__":
     global_context.initialize()
 
     ue = UsersEngine(global_context)
+
+    info = UserInfo()
+    info.user_id = 1234
+    info.name = 'aaa'
+
+    #ue.put_info(info)
+    print ue.search('aaa')
+
     #print ue.get_info(8147102016349374469).encode()
     #print ue.search("ivan")
 
     #ue.put_like(123, 346)
     #ue.get_friends(123, 3, '')
-    ue.remove_like(123, 346)
-    print ue.get_likes(123, 10, '').data
+    #ue.remove_like(123, 346)
+    #print ue.get_likes(123, 10, '').data
 
     #ue.put_sign(123, 5136828351633214532)
     #page = ue.get_signs(123, 1, '')
