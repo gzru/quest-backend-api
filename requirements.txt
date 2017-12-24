@@ -8,3 +8,4 @@ twilio==6.6.2
 boto3==1.4.7
 pycrypto==2.6.1
 PyYAML==3.12
+elasticsearch==6.0.0
