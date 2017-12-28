@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 from flask import Flask, jsonify, request
 
@@ -52,8 +52,6 @@ global_context = GlobalContext()
 global_context.initialize()
 
 def run_session(data, session_type):
-    #logging.info('query: %s', data[:256])
-
     response = jsonify()
     try:
         session = session_type(global_context)

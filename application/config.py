@@ -18,6 +18,9 @@ class Config(object):
     AEROSPIKE_NS_USERS = 'test'
     AEROSPIKE_NS_SIGNS = 'test'
     AEROSPIKE_NS_SIGNS_SEARCH_IDX = 'test'
+    AEROSPIKE_SIGNS_SEARCH_IDX_GLOBAL_SET = 'search_index_global'
+    AEROSPIKE_SIGNS_SEARCH_IDX_PRIVATE_SET = 'search_index_private'
+    AEROSPIKE_SIGNS_SEARCH_IDX_GEO_BIN = 'location'
 
     # S3
     S3_ENDPOINT_URL = 'http://10.136.60.75:9000'
@@ -37,6 +40,11 @@ class Config(object):
         'matcher.quest.aiarlabs.com'
     ]
     MATCHER_TIMEOUT_SEC = 10
+
+    # Elasticsearch
+    ELASTICSEARCH_ENABLED = False
+    ELASTICSEARCH_HOSTS = []
+    ELASTICSEARCH_TIMEOUT_SEC = 0.1
 
 
     @staticmethod
@@ -67,6 +75,10 @@ class Config(object):
 
         Config.MATCHER_HOSTS = config_data.get('matcher_hosts', Config.MATCHER_HOSTS)
         Config.MATCHER_TIMEOUT_SEC = config_data.get('matcher_timeout_sec', Config.MATCHER_TIMEOUT_SEC)
+
+        Config.ELASTICSEARCH_ENABLED = config_data.get('elasticsearch_enabled', Config.ELASTICSEARCH_ENABLED)
+        Config.ELASTICSEARCH_HOSTS = config_data.get('elasticsearch_hosts', Config.ELASTICSEARCH_HOSTS)
+        Config.ELASTICSEARCH_TIMEOUT_SEC = config_data.get('elasticsearch_timeout_sec', Config.ELASTICSEARCH_TIMEOUT_SEC)
 
         return True
 

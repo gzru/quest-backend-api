@@ -103,7 +103,7 @@ class ClastersSearcher(object):
 
 
 if __name__ == "__main__":
-    import aerospike_connector
+    import connectors.aerospike_connector
 
     connector = aerospike_connector.AerospikeConnector(128000, 1000, 1000)
     connector.connect(['localhost'])

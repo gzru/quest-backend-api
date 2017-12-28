@@ -21,8 +21,8 @@ class SearchIndex(object):
     def __init__(self, connector):
         self._aerospike_connector = connector
         self._namespace = Config.AEROSPIKE_NS_SIGNS_SEARCH_IDX
-        self._global_set = 'search_index_global'
-        self._private_set = 'search_index_private'
+        self._global_set = Config.AEROSPIKE_SIGNS_SEARCH_IDX_GLOBAL_SET
+        self._private_set = Config.AEROSPIKE_SIGNS_SEARCH_IDX_PRIVATE_SET
 
     def add_sign(self, info, features):
         location = aerospike.GeoJSON(
@@ -137,7 +137,7 @@ class SearchIndex(object):
 
 
 if __name__ == "__main__":
-    import aerospike_connector
+    import connectors.aerospike_connector
 
     connector = aerospike_connector.AerospikeConnector(128000, 10, 100)
     connector.connect(['165.227.86.99'])
