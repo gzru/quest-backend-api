@@ -36,6 +36,7 @@ class GlobalContext:
                                        Config.S3_SECRET_ACCESS_KEY)
 
         self.elasticsearch_connector = ElasticsearchConnector(Config.ELASTICSEARCH_HOSTS, \
+                                                              Config.ELASTICSEARCH_USERS_INDEX, \
                                                               Config.ELASTICSEARCH_TIMEOUT_SEC, \
                                                               enabled=Config.ELASTICSEARCH_ENABLED)
 

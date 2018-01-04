@@ -44,7 +44,8 @@ class Config(object):
     # Elasticsearch
     ELASTICSEARCH_ENABLED = False
     ELASTICSEARCH_HOSTS = []
-    ELASTICSEARCH_TIMEOUT_SEC = 0.1
+    ELASTICSEARCH_TIMEOUT_SEC = 1
+    ELASTICSEARCH_USERS_INDEX = 'users'
 
 
     @staticmethod

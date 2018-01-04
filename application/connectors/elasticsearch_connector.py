@@ -16,7 +16,7 @@ class SearchEntry(object):
 
 class ElasticsearchConnector(object):
 
-    def __init__(self, hosts, timeout_sec, enabled=True):
+    def __init__(self, hosts, index, timeout_sec, enabled=True):
         self._enabled = enabled
         if self._enabled == False:
             return
@@ -26,7 +26,7 @@ class ElasticsearchConnector(object):
                                      sniff_on_start=True,
                                      sniff_on_connection_fail=True,
                                      sniffer_timeout=60)
-        self._index = 'users'
+        self._index = index
         self._doc_type = 'profile'
 
     def set_user_name(self, user_id, name):
@@ -91,4 +91,9 @@ class ElasticsearchConnector(object):
             results.append(rentry)
         return results
 
+    def create_index(self, settings_json):
+        if self._client.indices.exists(self._index) == True:
+            return
+
+        response = self._client.indices.create(index=self._index, body=settings_json)
 
