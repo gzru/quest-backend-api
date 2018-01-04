@@ -187,12 +187,14 @@ class SignsEngine(object):
 
     def _put_meta(self, sign_id, meta_blob):
         self._aerospike_connector.put_data((self._namespace, self._meta_set, str(sign_id)), meta_blob)
+        self._s3connector.put_data_object('content', 'sign/{}/meta'.format(sign_id), meta_blob)
 
     def get_meta(self, sign_id):
         return self._get_blob((self._namespace, self._meta_set, str(sign_id)))
 
     def _put_object(self, sign_id, object_blob):
         self._aerospike_connector.put_data((self._namespace, self._object_set, str(sign_id)), object_blob)
+        self._s3connector.put_data_object('content', 'sign/{}/object'.format(sign_id), object_blob)
 
     def get_object(self, sign_id):
         return self._get_blob((self._namespace, self._object_set, str(sign_id)))
