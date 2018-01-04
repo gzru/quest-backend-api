@@ -66,9 +66,6 @@ class SignsEngine(object):
         self._image_thumb_set = 'sign_image_thumbnail'
         self._preview_set = 'sign_preview'
         self._access_set = 'relations_user_sign'
-        self._searcher_host = '174.138.38.144'
-        self._searcher_port = 28000
-        self._searcher_req_timeout = 0.1
 
     def put_sign(self, info, features, meta_blob, object_blob, image_blob, preview_blob):
         # Generate sign id
